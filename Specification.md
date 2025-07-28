@@ -30,8 +30,19 @@ The Front end should facilitate your users to (in order of priority):
 * Add items to the portfolio
 * Remove items from the portfolio
 
-In terms of detailed requirements, your instructor will act as customer, and will tell you what they want. You can arrange meetings with them as required.
+currently, we have roughly designed our data entity: 
 
+user: user id, first name, last name, password
+
+net worth: user id, balance, stock
+
+order: order id, user id, order type (buy/sell), stock symbol, number of shares, price per share, date
+
+holding: holding id, user id, stock symbol, total number of holding shares, average price per share
+
+watchlist: watchlist id, user id, stock symbol, display name
+
+help us modify the data entity design. modify it. polish it. and generate a mysql ddl file
 
 ## Notes
 
