@@ -95,3 +95,38 @@
   longName: 'Apple Inc.',
   displayName: 'Apple',
   symbol: 'AAPL'
+
+| Field Name                     | Description                                                           |
+| ------------------------------ | --------------------------------------------------------------------- |
+| **language**                   | Language of the data (e.g., "en-US" means English, US region)         |
+| **region**                     | Geographic region or market ("US" here)                               |
+| **quoteType**                  | Type of financial instrument ("EQUITY" = stock)                       |
+| **typeDisp**                   | Display name for quote type ("Equity")                                |
+| **quoteSourceName**            | Source of price data ("Nasdaq Real Time Price")                       |
+| **triggerable**                | Whether price alerts can be set (`true`/`false`)                      |
+| **customPriceAlertConfidence** | Confidence level for custom price alerts (e.g., "HIGH")               |
+| **currency**                   | Currency of the price (e.g., "USD")                                   |
+| **marketState**                | Market status at time of query ("PREPRE" = before pre-market session) |
+| **hasPrePostMarketData**       | Whether pre/post market data is available (`true`/`false`)            |
+| **firstTradeDateMilliseconds** | Timestamp of first trade date (e.g., 1980-12-12)                      |
+| **priceHint**                  | Price precision hint (number of decimal places, e.g., 2)              |
+| **postMarketChangePercent**    | Percent price change in post-market session                           |
+| **postMarketPrice**            | Price during post-market session                                      |
+| **postMarketChange**           | Absolute price change during post-market session                      |
+| **regularMarketChange**        | Absolute price change during regular market                           |
+| **regularMarketDayHigh**       | Highest price during regular market day                               |
+| **regularMarketDayRange**      | Object with low/high prices of the regular market day                 |
+| **regularMarketDayLow**        | Lowest price during regular market day                                |
+| **regularMarketVolume**        | Number of shares traded during regular market session                 |
+| **regularMarketPreviousClose** | Closing price from previous regular market session                    |
+| **bid**                        | Current highest price a buyer is willing to pay                       |
+| **ask**                        | Current lowest price a seller is willing to accept                    |
+| **bidSize**                    | Number of shares available at the bid price                           |
+| **askSize**                    | Number of shares available at the ask price                           |
+| **fullExchangeName**           | Full name of the exchange (e.g., "NasdaqGS")                          |
+| **financialCurrency**          | Currency for financial data (usually same as `currency`)              |
+| **regularMarketOpen**          | Opening price of the current regular market session                   |
+| **averageDailyVolume3Month**   | Average daily trading volume over last 3 months                       |
+| **averageDailyVolume10Day**    | Average daily trading volume over last 10 days                        |
+| **fiftyTwoWeekLowChange**      | Absolute price change since 52-week low                               |
+| **fiftyTwoWeek**               |                                                                       |
