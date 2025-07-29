@@ -1,7 +1,9 @@
 "use client"
 
+import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Clock, ExternalLink, TrendingUp, TrendingDown, Zap } from "lucide-react"
 
 interface NewsItem {
@@ -83,6 +85,18 @@ const mockNews: NewsItem[] = [
 ]
 
 export default function PortfolioInsights({ portfolio }: InsightsProps) {
+  const [selectedNews, setSelectedNews] = useState<NewsItem | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+
+  const openNewsModal = (news: NewsItem) => {
+    setSelectedNews(news)
+    setIsModalOpen(true)
+  }
+
+  const closeNewsModal = () => {
+    setSelectedNews(null)
+    setIsModalOpen(false)
+  }
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString)
     const now = new Date()
@@ -147,32 +161,22 @@ export default function PortfolioInsights({ portfolio }: InsightsProps) {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {relevantNews.slice(0, 3).map((news) => (
-                <div key={news.id} className="border-l-2 border-orange-200 pl-4 py-2">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 space-y-2">
-                      <div className="flex items-center gap-2">
-                        {getSentimentIcon(news.sentiment)}
-                        <h3 className="font-medium text-sm leading-tight">{news.title}</h3>
-                      </div>
-                      <p className="text-xs text-muted-foreground leading-relaxed">
-                        {news.summary}
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <Badge variant={getCategoryColor(news.category) as any} className="text-xs">
-                          {news.category.toUpperCase()}
-                        </Badge>
-                        <span className="text-xs text-muted-foreground">{news.source}</span>
-                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Clock className="h-3 w-3" />
-                          {formatTimeAgo(news.publishedAt)}
-                        </div>
-                      </div>
+            <div className="space-y-2">
+              {relevantNews.slice(0, 5).map((news) => (
+                <div 
+                  key={news.id} 
+                  className="flex items-center gap-3 p-3 border-l-2 border-orange-200 pl-4 hover:bg-muted/50 cursor-pointer transition-colors"
+                  onClick={() => openNewsModal(news)}
+                >
+                  {getSentimentIcon(news.sentiment)}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium text-sm leading-tight truncate">{news.title}</h3>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Clock className="h-3 w-3" />
+                      {formatTimeAgo(news.publishedAt)}
                     </div>
-                    {news.url && (
-                      <ExternalLink className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" />
-                    )}
                   </div>
                 </div>
               ))}
@@ -193,36 +197,21 @@ export default function PortfolioInsights({ portfolio }: InsightsProps) {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
             {generalNews.map((news) => (
-              <div key={news.id} className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                <div className="space-y-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="font-medium text-sm leading-tight flex-1">{news.title}</h3>
-                    {getSentimentIcon(news.sentiment)}
-                  </div>
-                  
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    {news.summary}
-                  </p>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Badge variant={getCategoryColor(news.category) as any} className="text-xs">
-                        {news.category.toUpperCase()}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">{news.source}</span>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Clock className="h-3 w-3" />
-                        {formatTimeAgo(news.publishedAt)}
-                      </div>
-                      {news.url && (
-                        <ExternalLink className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-foreground" />
-                      )}
-                    </div>
+              <div 
+                key={news.id} 
+                className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+                onClick={() => openNewsModal(news)}
+              >
+                {getSentimentIcon(news.sentiment)}
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-medium text-sm leading-tight truncate">{news.title}</h3>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Clock className="h-3 w-3" />
+                    {formatTimeAgo(news.publishedAt)}
                   </div>
                 </div>
               </div>
@@ -230,6 +219,50 @@ export default function PortfolioInsights({ portfolio }: InsightsProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* News Detail Modal */}
+      <Dialog open={isModalOpen} onOpenChange={closeNewsModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {selectedNews && getSentimentIcon(selectedNews.sentiment)}
+              {selectedNews?.title}
+            </DialogTitle>
+          </DialogHeader>
+          {selectedNews && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Badge variant={getCategoryColor(selectedNews.category) as any} className="text-xs">
+                  {selectedNews.category.toUpperCase()}
+                </Badge>
+                <span className="text-sm text-muted-foreground">{selectedNews.source}</span>
+                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                  <Clock className="h-3 w-3" />
+                  {formatTimeAgo(selectedNews.publishedAt)}
+                </div>
+              </div>
+              
+              <div className="prose prose-sm max-w-none">
+                <p className="text-gray-700 leading-relaxed">{selectedNews.summary}</p>
+              </div>
+              
+              {selectedNews.url && (
+                <div className="flex justify-end">
+                  <a 
+                    href={selectedNews.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800 transition-colors"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    Read full article
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

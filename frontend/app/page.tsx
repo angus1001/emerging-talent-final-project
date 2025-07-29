@@ -10,6 +10,7 @@ import AssetManagement from "@/components/asset-management"
 import Navigation from "@/components/navigation"
 import PortfolioInsights from "@/components/portfolio-insights"
 import StockDetailModal from "@/components/stock-detail-modal"
+import { getUserData } from "@/lib/user-data"
 
 // Mock portfolio data
 const mockPortfolio = {
@@ -92,6 +93,7 @@ export default function PortfolioManagement() {
   const [portfolio, setPortfolio] = useState(mockPortfolio)
   const [selectedStock, setSelectedStock] = useState<any>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const currentUser = getUserData() // Get consistent user data
 
   const handleRemoveAsset = (assetId: string) => {
     const assetToRemove = portfolio.assets.find((asset) => asset.id === assetId)
@@ -144,11 +146,7 @@ export default function PortfolioManagement() {
     <div className="min-h-screen bg-gray-50">
       {/* Navigation */}
       <Navigation 
-        user={{
-          name: "John Doe",
-          email: "john.doe@portfolio.com",
-          avatar: "/placeholder-user.jpg"
-        }}
+        user={currentUser}
         onHomeClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
         onMarketsClick={() => window.location.href = "/markets"}
         onProfileClick={() => window.location.href = "/profile"}

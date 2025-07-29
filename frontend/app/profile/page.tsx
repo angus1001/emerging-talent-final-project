@@ -18,23 +18,18 @@ import {
   CreditCard
 } from "lucide-react"
 import Navigation from "@/components/navigation"
+import { getUserData } from "@/lib/user-data"
 
-// Mock user data - in a real app, this would come from an API or database
-const userData = {
-  id: "user-123",
-  name: "John Doe",
-  email: "john.doe@portfolio.com",
+// Additional profile data that extends the base user data
+const additionalProfileData = {
   phone: "+1 (555) 123-4567",
-  avatar: "/placeholder-user.jpg",
-  location: "New York, NY",
-  joinDate: "January 2023",
-  accountType: "Premium",
+  location: "San Francisco, CA",
   occupation: "Financial Analyst",
   company: "Investment Corp",
   bio: "Experienced financial analyst with a passion for portfolio management and investment strategies. Focused on long-term wealth building and risk management.",
   preferences: {
     currency: "USD",
-    timezone: "EST",
+    timezone: "PST",
     language: "English",
     notifications: {
       email: true,
@@ -72,6 +67,14 @@ const userData = {
 }
 
 export default function UserProfilePage() {
+  const currentUser = getUserData() // Get consistent user data
+  
+  // Merge base user data with additional profile data
+  const userData = {
+    ...currentUser,
+    ...additionalProfileData
+  }
+
   const handleHomeClick = () => {
     window.location.href = "/"
   }
@@ -92,11 +95,7 @@ export default function UserProfilePage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation 
-        user={{
-          name: userData.name,
-          email: userData.email,
-          avatar: userData.avatar
-        }}
+        user={currentUser}
         onHomeClick={handleHomeClick}
         onMarketsClick={handleMarketsClick}
         onLogout={() => console.log("User logged out")}

@@ -4,9 +4,12 @@ import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { TrendingUp, TrendingDown, Activity, Volume2, Heart, HeartOff } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { TrendingUp, TrendingDown, Activity, Volume2, Heart, HeartOff, Search, Filter } from "lucide-react"
 import Navigation from "@/components/navigation"
 import StockDetailModal from "@/components/stock-detail-modal"
+import { getUserData } from "@/lib/user-data"
 
 // Mock market data - more realistic based on actual market data
 const marketData = [
@@ -163,6 +166,9 @@ export default function MarketsPage() {
   const [likedStocks, setLikedStocks] = useState<string[]>(["AAPL", "NVDA", "MSFT"])
   const [selectedStock, setSelectedStock] = useState<any>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [sectorFilter, setSectorFilter] = useState<string>("all")
+  const currentUser = getUserData() // Get consistent user data
 
   const handleHomeClick = () => {
     window.location.href = "/"
@@ -183,6 +189,20 @@ export default function MarketsPage() {
   const isLiked = (symbol: string) => likedStocks.includes(symbol)
 
   const likedStockData = marketData.filter(stock => likedStocks.includes(stock.symbol))
+
+  // Filter and search logic
+  const filteredMarketData = marketData.filter((stock) => {
+    const matchesSearch = 
+      stock.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      stock.name.toLowerCase().includes(searchTerm.toLowerCase())
+    
+    const matchesSector = sectorFilter === "all" || stock.sector === sectorFilter
+    
+    return matchesSearch && matchesSector
+  })
+
+  // Get unique sectors for filter dropdown
+  const uniqueSectors = Array.from(new Set(marketData.map(stock => stock.sector)))
 
   const openStockModal = (stock: any) => {
     setSelectedStock(stock)
@@ -209,6 +229,7 @@ export default function MarketsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation 
+        user={currentUser}
         onHomeClick={handleHomeClick}
         onProfileClick={handleProfileClick}
       />
@@ -336,12 +357,44 @@ export default function MarketsPage() {
           <div className="lg:col-span-3">
             <Card>
               <CardHeader>
-                <CardTitle>Market Shares</CardTitle>
-                <CardDescription>Real-time stock prices and market data</CardDescription>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div>
+                    <CardTitle>Market Shares</CardTitle>
+                    <CardDescription>Real-time stock prices and market data</CardDescription>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    {/* Search Box */}
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                      <Input
+                        placeholder="Search stocks..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10 w-full sm:w-48"
+                      />
+                    </div>
+                    {/* Sector Filter */}
+                    <Select value={sectorFilter} onValueChange={setSectorFilter}>
+                      <SelectTrigger className="w-full sm:w-40">
+                        <Filter className="h-4 w-4 mr-2" />
+                        <SelectValue placeholder="All Sectors" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Sectors</SelectItem>
+                        {uniqueSectors.map((sector) => (
+                          <SelectItem key={sector} value={sector}>
+                            {sector}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {marketData.map((stock) => (
+                  {filteredMarketData.length > 0 ? (
+                    filteredMarketData.map((stock) => (
                     <div
                       key={stock.id}
                       className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
@@ -407,7 +460,13 @@ export default function MarketsPage() {
                         </Button>
                       </div>
                     </div>
-                  ))}
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500">No stocks found matching your criteria.</p>
+                    <p className="text-sm text-gray-400 mt-2">Try adjusting your search term or filter.</p>
+                  </div>
+                )}
                 </div>
               </CardContent>
             </Card>
