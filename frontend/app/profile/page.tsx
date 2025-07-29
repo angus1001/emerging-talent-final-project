@@ -23,7 +23,7 @@ import Navigation from "@/components/navigation"
 import { EditUserDialog } from "@/components/edit-user-dialog"
 import { ToastContainer, useToast } from "@/components/toast"
 import { useUserData } from "@/hooks/use-user-data"
-import { getUserDataSync } from "@/lib/user-data"
+import { getInitials } from "@/lib/utils"
 
 // Additional profile data that extends the base user data
 const additionalProfileData = {
@@ -70,7 +70,6 @@ const additionalProfileData = {
 
 export default function UserProfilePage() {
   const { user, loading, error, refetchUser, updateUser } = useUserData()
-  const fallbackUser = getUserDataSync() // For navigation component
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const { toasts, removeToast, showSuccess, showError } = useToast()
 
@@ -89,7 +88,8 @@ export default function UserProfilePage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navigation 
-          user={fallbackUser}
+          user={user}
+          loading={loading}
           onHomeClick={() => window.location.href = "/"}
           onMarketsClick={() => window.location.href = "/markets"}
           onAccountClick={() => window.location.href = "/account"}
@@ -110,7 +110,8 @@ export default function UserProfilePage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navigation 
-          user={fallbackUser}
+          user={user}
+          loading={loading}
           onHomeClick={() => window.location.href = "/"}
           onMarketsClick={() => window.location.href = "/markets"}
           onAccountClick={() => window.location.href = "/account"}
@@ -152,19 +153,11 @@ export default function UserProfilePage() {
     window.location.href = "/markets"
   }
 
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2)
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation 
         user={user}
+        loading={loading}
         onHomeClick={handleHomeClick}
         onMarketsClick={handleMarketsClick}
         onAccountClick={() => window.location.href = "/account"}

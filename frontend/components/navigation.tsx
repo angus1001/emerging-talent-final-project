@@ -11,14 +11,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Home, User, Settings, LogOut, ChevronDown, TrendingUp, CreditCard } from "lucide-react"
+import { Home, User as UserIcon, Settings, LogOut, ChevronDown, TrendingUp, CreditCard, Loader2 } from "lucide-react"
+import { getInitials } from "@/lib/utils"
+import { User } from "@/lib/user-data"
 
 interface NavigationProps {
-  user?: {
-    name: string
-    email: string
-    avatar?: string
-  }
+  user?: User | null
+  loading?: boolean
   onHomeClick?: () => void
   onMarketsClick?: () => void
   onAccountClick?: () => void
@@ -27,7 +26,8 @@ interface NavigationProps {
 }
 
 export default function Navigation({ 
-  user = { name: "John Doe", email: "john.doe@example.com" }, 
+  user,
+  loading = false,
   onHomeClick,
   onMarketsClick,
   onAccountClick,
@@ -35,6 +35,13 @@ export default function Navigation({
   onLogout 
 }: NavigationProps) {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+
+  // Fallback user data for when API is loading or failed
+  const displayUser = user || { 
+    name: "Loading...", 
+    email: "...", 
+    avatar: "/placeholder-user.jpg" 
+  }
 
   const handleHomeClick = () => {
     if (onHomeClick) {
@@ -79,15 +86,6 @@ export default function Navigation({
       // Default logout behavior
       console.log("User logged out")
     }
-  }
-
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2)
   }
 
   return (
@@ -139,31 +137,42 @@ export default function Navigation({
                 <Button 
                   variant="ghost" 
                   className="flex items-center space-x-2 p-2 hover:bg-gray-100"
+                  disabled={loading}
                 >
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={user.avatar} alt={user.name} />
+                    <AvatarImage src={displayUser.avatar} alt={displayUser.name} />
                     <AvatarFallback className="bg-blue-500 text-white">
-                      {getInitials(user.name)}
+                      {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : getInitials(displayUser.name)}
                     </AvatarFallback>
                   </Avatar>
                   <div className="hidden md:flex flex-col items-start">
-                    <span className="text-sm font-medium text-gray-900">{user.name}</span>
-                    <span className="text-xs text-gray-500">{user.email}</span>
+                    <span className="text-sm font-medium text-gray-900">
+                      {loading ? "Loading..." : displayUser.name}
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      {loading ? "..." : displayUser.email}
+                    </span>
                   </div>
                   <ChevronDown className="h-4 w-4 text-gray-500" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuLabel>
+                  {loading ? "Loading..." : "My Account"}
+                </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
                   className="flex items-center space-x-2"
                   onClick={handleProfileClick}
+                  disabled={loading}
                 >
-                  <User className="h-4 w-4" />
+                  <UserIcon className="h-4 w-4" />
                   <span>Profile</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="flex items-center space-x-2">
+                <DropdownMenuItem 
+                  className="flex items-center space-x-2"
+                  disabled={loading}
+                >
                   <Settings className="h-4 w-4" />
                   <span>Settings</span>
                 </DropdownMenuItem>
@@ -171,6 +180,7 @@ export default function Navigation({
                 <DropdownMenuItem 
                   className="flex items-center space-x-2 text-red-600 focus:text-red-600"
                   onClick={handleLogout}
+                  disabled={loading}
                 >
                   <LogOut className="h-4 w-4" />
                   <span>Log out</span>

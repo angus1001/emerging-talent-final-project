@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { TrendingUp, TrendingDown, Activity, Volume2, Heart, HeartOff, Search, Filter } from "lucide-react"
 import Navigation from "@/components/navigation"
 import StockDetailModal from "@/components/stock-detail-modal"
-import { getUserData } from "@/lib/user-data"
+import { useUserData } from "@/hooks/use-user-data"
 
 // Mock market data - more realistic based on actual market data
 const marketData = [
@@ -163,12 +163,12 @@ const getSectorBadgeColor = (sector: string) => {
 }
 
 export default function MarketsPage() {
+  const { user, loading: userLoading } = useUserData()
   const [watchlistStocks, setWatchlistStocks] = useState<string[]>(["AAPL", "NVDA", "MSFT"])
   const [selectedStock, setSelectedStock] = useState<any>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [sectorFilter, setSectorFilter] = useState<string>("all")
-  const currentUser = getUserData() // Get consistent user data
 
   const handleHomeClick = () => {
     window.location.href = "/"
@@ -229,7 +229,8 @@ export default function MarketsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation 
-        user={currentUser}
+        user={user}
+        loading={userLoading}
         onHomeClick={handleHomeClick}
         onAccountClick={() => window.location.href = "/account"}
         onProfileClick={handleProfileClick}

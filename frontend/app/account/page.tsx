@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
+import { useUserData } from "@/hooks/use-user-data"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { 
   User, 
@@ -25,7 +26,7 @@ import {
 } from "lucide-react"
 import Navigation from "@/components/navigation"
 import StockDetailModal from "@/components/stock-detail-modal"
-import { getUserData } from "@/lib/user-data"
+import { getInitials } from "@/lib/utils"
 
 // Mock market data (same as markets page)
 const marketData = [
@@ -140,7 +141,7 @@ const userHoldings = [
 const mockWatchlist = ["AAPL", "NVDA", "MSFT", "TSLA"]
 
 export default function AccountPage() {
-  const currentUser = getUserData()
+  const { user, loading, error, refetchUser, updateUser } = useUserData()
   const [selectedStock, setSelectedStock] = useState<any>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   
@@ -186,22 +187,65 @@ export default function AccountPage() {
     console.log(`Sell order:`, orderData.orderDetails)
   }
 
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2)
-  }
-
   // Get watchlist stock data
   const watchlistStockData = marketData.filter(stock => mockWatchlist.includes(stock.symbol))
+
+  // Handle loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navigation 
+          user={user}
+          loading={loading}
+          onHomeClick={handleHomeClick}
+          onMarketsClick={handleMarketsClick}
+          onProfileClick={handleProfileClick}
+          onLogout={() => console.log("User logged out")}
+        />
+        <div className="container mx-auto p-6 flex items-center justify-center">
+          <div className="flex items-center space-x-2">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+            <span>Loading account data...</span>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Handle error state
+  if (error || !user) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navigation 
+          user={user}
+          loading={loading}
+          onHomeClick={handleHomeClick}
+          onMarketsClick={handleMarketsClick}
+          onProfileClick={handleProfileClick}
+          onLogout={() => console.log("User logged out")}
+        />
+        <div className="container mx-auto p-6">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <p className="text-red-800">
+              {error || 'Failed to load user data. Please try again.'}
+            </p>
+            <button 
+              onClick={refetchUser}
+              className="mt-2 text-red-600 hover:text-red-800 underline"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation 
-        user={currentUser}
+        user={user}
+        loading={loading}
         onHomeClick={handleHomeClick}
         onMarketsClick={handleMarketsClick}
         onProfileClick={handleProfileClick}
@@ -280,16 +324,16 @@ export default function AccountPage() {
                 {/* User Profile */}
                 <div className="flex items-center space-x-4">
                   <Avatar className="w-16 h-16">
-                    <AvatarImage src={currentUser.avatar} alt={currentUser.name} />
+                    <AvatarImage src={user.avatar} alt={user.name} />
                     <AvatarFallback className="text-lg">
-                      {getInitials(currentUser.name)}
+                      {getInitials(user.name)}
                     </AvatarFallback>
                   </Avatar>
                   <div className="space-y-1">
-                    <h3 className="text-xl font-semibold">{currentUser.name}</h3>
-                    <p className="text-sm text-gray-600">{currentUser.email}</p>
-                    <Badge variant={currentUser.accountType === "Premium" ? "default" : "secondary"}>
-                      {currentUser.accountType} Account
+                    <h3 className="text-xl font-semibold">{user.name}</h3>
+                    <p className="text-sm text-gray-600">{user.email}</p>
+                    <Badge variant={user.accountType === "Premium" ? "default" : "secondary"}>
+                      {user.accountType} Account
                     </Badge>
                   </div>
                 </div>
