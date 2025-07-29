@@ -98,6 +98,7 @@ export default function UserProfilePage() {
         user={currentUser}
         onHomeClick={handleHomeClick}
         onMarketsClick={handleMarketsClick}
+        onAccountClick={() => window.location.href = "/account"}
         onLogout={() => console.log("User logged out")}
       />
       

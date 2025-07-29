@@ -163,7 +163,7 @@ const getSectorBadgeColor = (sector: string) => {
 }
 
 export default function MarketsPage() {
-  const [likedStocks, setLikedStocks] = useState<string[]>(["AAPL", "NVDA", "MSFT"])
+  const [watchlistStocks, setWatchlistStocks] = useState<string[]>(["AAPL", "NVDA", "MSFT"])
   const [selectedStock, setSelectedStock] = useState<any>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
@@ -178,17 +178,17 @@ export default function MarketsPage() {
     window.location.href = "/profile"
   }
 
-  const toggleLike = (symbol: string) => {
-    setLikedStocks(prev => 
+  const toggleWatchlist = (symbol: string) => {
+    setWatchlistStocks(prev => 
       prev.includes(symbol) 
         ? prev.filter(s => s !== symbol)
         : [...prev, symbol]
     )
   }
 
-  const isLiked = (symbol: string) => likedStocks.includes(symbol)
+  const isInWatchlist = (symbol: string) => watchlistStocks.includes(symbol)
 
-  const likedStockData = marketData.filter(stock => likedStocks.includes(stock.symbol))
+  const watchlistStockData = marketData.filter(stock => watchlistStocks.includes(stock.symbol))
 
   // Filter and search logic
   const filteredMarketData = marketData.filter((stock) => {
@@ -231,6 +231,7 @@ export default function MarketsPage() {
       <Navigation 
         user={currentUser}
         onHomeClick={handleHomeClick}
+        onAccountClick={() => window.location.href = "/account"}
         onProfileClick={handleProfileClick}
       />
       
@@ -286,22 +287,22 @@ export default function MarketsPage() {
           </Card>
         </div>
 
-        {/* Main Content: Liked Shares (25%) + Market Shares (75%) */}
+        {/* Main Content: Watchlist (25%) + Market Shares (75%) */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Liked Shares - Left Side (25%) */}
+          {/* Watchlist - Left Side (25%) */}
           <div className="lg:col-span-1">
             <Card className="h-fit">
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <Heart className="w-5 h-5 mr-2 text-red-500" />
-                  Liked Shares
+                  Watchlist
                 </CardTitle>
                 <CardDescription>Your favorite stocks to watch</CardDescription>
               </CardHeader>
               <CardContent>
-                {likedStockData.length > 0 ? (
+                {watchlistStockData.length > 0 ? (
                   <div className="space-y-3">
-                    {likedStockData.map((stock) => (
+                    {watchlistStockData.map((stock) => (
                       <div
                         key={stock.id}
                         className="p-3 border rounded-lg hover:bg-gray-50 transition-colors"
@@ -317,7 +318,7 @@ export default function MarketsPage() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => toggleLike(stock.symbol)}
+                              onClick={() => toggleWatchlist(stock.symbol)}
                               className="p-1 h-auto"
                             >
                               <Heart className="w-3 h-3 text-red-500 fill-red-500" />
@@ -345,7 +346,7 @@ export default function MarketsPage() {
                 ) : (
                   <div className="text-center py-8 text-gray-500">
                     <Heart className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-                    <p className="text-sm">No liked shares yet</p>
+                    <p className="text-sm">No stocks in watchlist yet</p>
                     <p className="text-xs text-gray-400">Click the heart icon to add favorites</p>
                   </div>
                 )}
@@ -449,10 +450,10 @@ export default function MarketsPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => toggleLike(stock.symbol)}
+                          onClick={() => toggleWatchlist(stock.symbol)}
                           className="p-2"
                         >
-                          {isLiked(stock.symbol) ? (
+                          {isInWatchlist(stock.symbol) ? (
                             <Heart className="w-5 h-5 text-red-500 fill-red-500" />
                           ) : (
                             <HeartOff className="w-5 h-5 text-gray-400" />

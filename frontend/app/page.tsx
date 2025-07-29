@@ -149,6 +149,7 @@ export default function PortfolioManagement() {
         user={currentUser}
         onHomeClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
         onMarketsClick={() => window.location.href = "/markets"}
+        onAccountClick={() => window.location.href = "/account"}
         onProfileClick={() => window.location.href = "/profile"}
         onLogout={() => console.log("User logged out")}
       />

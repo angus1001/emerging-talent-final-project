@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Home, User, Settings, LogOut, ChevronDown, TrendingUp } from "lucide-react"
+import { Home, User, Settings, LogOut, ChevronDown, TrendingUp, CreditCard } from "lucide-react"
 
 interface NavigationProps {
   user?: {
@@ -21,6 +21,7 @@ interface NavigationProps {
   }
   onHomeClick?: () => void
   onMarketsClick?: () => void
+  onAccountClick?: () => void
   onProfileClick?: () => void
   onLogout?: () => void
 }
@@ -29,6 +30,7 @@ export default function Navigation({
   user = { name: "John Doe", email: "john.doe@example.com" }, 
   onHomeClick,
   onMarketsClick,
+  onAccountClick,
   onProfileClick,
   onLogout 
 }: NavigationProps) {
@@ -48,7 +50,16 @@ export default function Navigation({
       onMarketsClick()
     } else {
       // Default behavior - navigate to markets page
-      window.location.href = "/markets"
+      window.location.href = '/markets'
+    }
+  }
+
+  const handleAccountClick = () => {
+    if (onAccountClick) {
+      onAccountClick()
+    } else {
+      // Default behavior - navigate to account page
+      window.location.href = '/account'
     }
   }
 
@@ -57,7 +68,7 @@ export default function Navigation({
       onProfileClick()
     } else {
       // Default behavior - navigate to profile page
-      window.location.href = "/profile"
+      window.location.href = '/profile'
     }
   }
 
@@ -66,7 +77,7 @@ export default function Navigation({
       onLogout()
     } else {
       // Default logout behavior
-      console.log("Logout clicked")
+      console.log("User logged out")
     }
   }
 
@@ -83,7 +94,7 @@ export default function Navigation({
     <nav className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
-          {/* Home Button */}
+          {/* Navigation Buttons */}
           <div className="flex items-center space-x-4">
             <Button 
               variant="ghost" 
@@ -103,6 +114,16 @@ export default function Navigation({
             >
               <TrendingUp className="h-4 w-4" />
               <span className="font-medium">Markets</span>
+            </Button>
+
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleAccountClick}
+              className="flex items-center space-x-2 text-gray-700 hover:text-gray-900"
+            >
+              <CreditCard className="h-4 w-4" />
+              <span className="font-medium">Account</span>
             </Button>
           </div>
 
