@@ -1,0 +1,88 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  user_id     Int      @id @default(autoincrement())
+  first_name  String
+  last_name   String
+  password    String
+  email       String   @unique
+  phone       String?
+  created_at  DateTime @default(now())
+  language    String?
+  location    String?
+  orders      Order[]
+  holdings    Holding[]
+  watchlists  Watchlist[]
+  netWorths   NetWorth[]
+}
+
+model Stock {
+  stock_id      Int      @id @default(autoincrement())
+  symbol        String
+  company_name  String
+  current_price Float
+  last_updated  DateTime?
+  exchange      String?
+  volume        String?
+  sector        String?
+  market_cap    String?
+  company_info  String?
+  in_list       Boolean?
+  orders        Order[]
+  holdings      Holding[]
+  watchlists    Watchlist[]
+}
+
+model Order {
+  order_id        Int      @id @default(autoincrement())
+  user            User     @relation(fields: [user_id], references: [user_id])
+  user_id         Int
+  stock           Stock    @relation(fields: [stock_id], references: [stock_id])
+  stock_id        Int
+  order_type      String
+  quantity        Int
+  price_per_share Float
+  total_value     Int
+  date            DateTime
+  status          String
+  duration        String?
+}
+
+model Holding {
+  holding_id     Int      @id @default(autoincrement())
+  user           User     @relation(fields: [user_id], references: [user_id])
+  user_id        Int
+  stock          Stock    @relation(fields: [stock_id], references: [stock_id])
+  stock_id       Int
+  holding_number Int
+  average_price  Float
+  cash           Int
+  total_value    Int
+  last_updated   DateTime?
+}
+
+model Watchlist {
+  watchlist_id  Int      @id @default(autoincrement())
+  user          User     @relation(fields: [user_id], references: [user_id])
+  user_id       Int
+  stock         Stock    @relation(fields: [stock_id], references: [stock_id]) 
+  stock_id      Int      
+  display_name  String?
+  created_at    DateTime @default(now())
+}
+
+model NetWorth {
+  net_worth_id   Int      @id @default(autoincrement())
+  user           User     @relation(fields: [user_id], references: [user_id])
+  user_id        Int
+  total_balance  Float
+  stock_value    Float
+  date_recorded  DateTime
+} 

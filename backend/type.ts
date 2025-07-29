@@ -5,6 +5,9 @@ export interface User {
     last_name: string;
     password: string;
     email?: string;
+    phone?: string;
+    language?: string;
+    location?: string;
     created_at?: string;
   }
   
@@ -12,8 +15,13 @@ export interface User {
     stock_id: number;
     symbol: string;
     company_name: string;
+    company_info?: string;
+    exchange?: string;
+    market_cap?: string;
+    sector?: string;
     current_price: number;
-    last_updated?: string;
+    last_updated?: string;   
+    volume?: string;
   }
   
   export interface NetWorth {
@@ -33,6 +41,9 @@ export interface User {
     price_per_share: number;
     date?: string;
     status?: 'PENDING' | 'EXECUTED' | 'CANCELLED';
+    duration?: string;
+    quantity: number;
+    total_value: number;
   }
   
   export interface Holding {
@@ -40,7 +51,8 @@ export interface User {
     user_id: number;
     stock_id: number;
     total_shares: number;
-    average_price: number;
+    holding_number: number;
+    total_value: number;
     last_updated?: string;
   }
   
