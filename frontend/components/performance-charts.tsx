@@ -122,7 +122,7 @@ export default function PerformanceCharts({ portfolio }: PerformanceChartsProps)
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {pieData.map((entry, index) => (
+                  {pieData.map((entry: any, index: number) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
@@ -148,48 +148,6 @@ export default function PerformanceCharts({ portfolio }: PerformanceChartsProps)
         </CardContent>
       </Card>
 
-      {/* Asset Performance Bar Chart */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Asset Performance</CardTitle>
-          <CardDescription>Gain/loss by individual asset</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ChartContainer
-            config={{
-              gain: {
-                label: "Gain/Loss",
-                color: "hsl(var(--chart-3))",
-              },
-            }}
-            className="h-[300px]"
-          >
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={barData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <ChartTooltip
-                  content={({ active, payload, label }) => {
-                    if (active && payload && payload.length) {
-                      const data = payload[0].payload
-                      return (
-                        <div className="bg-background border rounded-lg p-2 shadow-md">
-                          <p className="font-medium">{label}</p>
-                          <p className="text-sm">Gain: ${data.gain.toLocaleString()}</p>
-                          <p className="text-sm">Return: {data.gainPercent.toFixed(2)}%</p>
-                        </div>
-                      )
-                    }
-                    return null
-                  }}
-                />
-                <Bar dataKey="gain" fill={(entry: any) => (entry.gain >= 0 ? "#22c55e" : "#ef4444")} name="Gain/Loss" />
-              </BarChart>
-            </ResponsiveContainer>
-          </ChartContainer>
-        </CardContent>
-      </Card>
     </div>
   )
 }

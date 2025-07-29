@@ -1,13 +1,48 @@
+"use client"
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { TrendingUp, TrendingDown } from "lucide-react"
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
+} from "recharts"
 
 interface PortfolioOverviewProps {
   portfolio: any
+  onStockClick?: (asset: any) => void
 }
 
-export default function PortfolioOverview({ portfolio }: PortfolioOverviewProps) {
+// Mock historical data
+const historicalData = [
+  { date: "2024-01", value: 100000, gain: 0 },
+  { date: "2024-02", value: 102500, gain: 2500 },
+  { date: "2024-03", value: 98750, gain: -1250 },
+  { date: "2024-04", value: 105000, gain: 5000 },
+  { date: "2024-05", value: 108500, gain: 8500 },
+  { date: "2024-06", value: 112000, gain: 12000 },
+  { date: "2024-07", value: 115750, gain: 15750 },
+  { date: "2024-08", value: 118250, gain: 18250 },
+  { date: "2024-09", value: 121500, gain: 21500 },
+  { date: "2024-10", value: 119750, gain: 19750 },
+  { date: "2024-11", value: 123000, gain: 23000 },
+  { date: "2024-12", value: 125750, gain: 25750 },
+]
+
+const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"]
+
+export default function PortfolioOverview({ portfolio, onStockClick }: PortfolioOverviewProps) {
   // Calculate asset allocation
   const assetAllocation = portfolio.assets.reduce((acc: any, asset: any) => {
     const percentage = (asset.totalValue / portfolio.totalValue) * 100
@@ -24,113 +59,159 @@ export default function PortfolioOverview({ portfolio }: PortfolioOverviewProps)
       return acc
     }, {})
 
+  // Prepare data for pie chart
+  const pieData = portfolio.assets.map((asset: any, index: number) => ({
+    name: asset.symbol,
+    value: asset.totalValue,
+    percentage: ((asset.totalValue / portfolio.totalValue) * 100).toFixed(1),
+  }))
+
+  // Prepare data for bar chart (asset performance)
+  const barData = portfolio.assets.map((asset: any) => ({
+    name: asset.symbol,
+    gain: asset.gain,
+    gainPercent: asset.gainPercent,
+  }))
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Asset Allocation */}
-      <Card>
+    <div className="space-y-6">
+      {/* Portfolio Performance Chart */}
+      <Card className="w-full">
         <CardHeader>
-          <CardTitle>Asset Allocation</CardTitle>
-          <CardDescription>Distribution of your portfolio by asset type</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {Object.entries(assetAllocation).map(([type, percentage]: [string, any]) => (
-            <div key={type} className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="capitalize font-medium">{type}</span>
-                <span className="text-sm text-muted-foreground">{percentage.toFixed(1)}%</span>
-              </div>
-              <Progress value={percentage} className="h-2" />
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-
-      {/* Sector Allocation */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Sector Allocation</CardTitle>
-          <CardDescription>Stock distribution by sector</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {Object.entries(sectorAllocation).map(([sector, percentage]: [string, any]) => (
-            <div key={sector} className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="font-medium">{sector}</span>
-                <span className="text-sm text-muted-foreground">{percentage.toFixed(1)}%</span>
-              </div>
-              <Progress value={percentage} className="h-2" />
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-
-      {/* Top Performers */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Top Performers</CardTitle>
-          <CardDescription>Best performing assets in your portfolio</CardDescription>
+          <CardTitle>Portfolio Performance</CardTitle>
+          <CardDescription>Historical portfolio value and gains over time</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {portfolio.assets
-              .sort((a: any, b: any) => b.gainPercent - a.gainPercent)
-              .slice(0, 3)
-              .map((asset: any) => (
-                <div key={asset.id} className="flex items-center justify-between">
-                  <div>
-                    <div className="font-medium">{asset.symbol}</div>
-                    <div className="text-sm text-muted-foreground">{asset.name}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="flex items-center gap-1">
-                      {asset.gainPercent > 0 ? (
-                        <TrendingUp className="w-4 h-4 text-green-600" />
-                      ) : (
-                        <TrendingDown className="w-4 h-4 text-red-600" />
-                      )}
-                      <span className={asset.gainPercent > 0 ? "text-green-600" : "text-red-600"}>
-                        {asset.gainPercent > 0 ? "+" : ""}
-                        {asset.gainPercent.toFixed(2)}%
-                      </span>
-                    </div>
-                    <div className="text-sm text-muted-foreground">${asset.totalValue.toLocaleString()}</div>
-                  </div>
-                </div>
-              ))}
-          </div>
+          <ChartContainer
+            config={{
+              value: {
+                label: "Portfolio Value",
+                color: "hsl(var(--chart-1))",
+              },
+              gain: {
+                label: "Total Gain",
+                color: "hsl(var(--chart-2))",
+              },
+            }}
+            className="h-[300px]"
+          >
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={historicalData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Line
+                  type="monotone"
+                  dataKey="value"
+                  stroke="var(--color-value)"
+                  strokeWidth={2}
+                  name="Portfolio Value"
+                />
+                <Line type="monotone" dataKey="gain" stroke="var(--color-gain)" strokeWidth={2} name="Total Gain" />
+              </LineChart>
+            </ResponsiveContainer>
+          </ChartContainer>
         </CardContent>
       </Card>
 
-      {/* Recent Activity */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Portfolio Summary</CardTitle>
-          <CardDescription>Key metrics and insights</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <div className="text-2xl font-bold text-green-600">
-                {portfolio.assets.filter((a: any) => a.gainPercent > 0).length}
-              </div>
-              <div className="text-sm text-muted-foreground">Winning Positions</div>
+      {/* Asset Allocation and Top Performers */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Asset Allocation Pie Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Asset Allocation</CardTitle>
+            <CardDescription>Portfolio distribution by asset value</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer
+              config={{
+                allocation: {
+                  label: "Allocation",
+                },
+              }}
+              className="h-[300px]"
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percentage }) => `${name} ${percentage}%`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {pieData.map((entry: any, index: number) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <ChartTooltip
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const data = payload[0].payload
+                        return (
+                          <div className="bg-background border rounded-lg p-2 shadow-md">
+                            <p className="font-medium">{data.name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              ${data.value.toLocaleString()} ({data.percentage}%)
+                            </p>
+                          </div>
+                        )
+                      }
+                      return null
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+
+        {/* Top Performers */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Top Performers</CardTitle>
+            <CardDescription>Best performing assets in your portfolio</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {portfolio.assets
+                .sort((a: any, b: any) => b.gainPercent - a.gainPercent)
+                .slice(0, 3)
+                .map((asset: any) => (
+                  <div key={asset.id} className="flex items-center justify-between">
+                    <div>
+                      <div 
+                        className={`font-medium ${onStockClick && asset.type === 'stock' ? 'text-blue-600 hover:text-blue-800 hover:underline cursor-pointer' : ''}`}
+                        onClick={() => onStockClick && asset.type === 'stock' && onStockClick(asset)}
+                      >
+                        {asset.symbol}
+                      </div>
+                      <div className="text-sm text-muted-foreground">{asset.name}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="flex items-center gap-1">
+                        {asset.gainPercent > 0 ? (
+                          <TrendingUp className="w-4 h-4 text-green-600" />
+                        ) : (
+                          <TrendingDown className="w-4 h-4 text-red-600" />
+                        )}
+                        <span className={asset.gainPercent > 0 ? "text-green-600" : "text-red-600"}>
+                          {asset.gainPercent > 0 ? "+" : ""}
+                          {asset.gainPercent.toFixed(2)}%
+                        </span>
+                      </div>
+                      <div className="text-sm text-muted-foreground">${asset.totalValue.toLocaleString()}</div>
+                    </div>
+                  </div>
+                ))}
             </div>
-            <div>
-              <div className="text-2xl font-bold text-red-600">
-                {portfolio.assets.filter((a: any) => a.gainPercent < 0).length}
-              </div>
-              <div className="text-sm text-muted-foreground">Losing Positions</div>
-            </div>
-          </div>
-          <div className="pt-4 border-t">
-            <div className="text-sm text-muted-foreground mb-2">Portfolio Diversity</div>
-            <div className="flex gap-2 flex-wrap">
-              <Badge variant="secondary">{Object.keys(assetAllocation).length} Asset Types</Badge>
-              <Badge variant="secondary">{Object.keys(sectorAllocation).length} Sectors</Badge>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
