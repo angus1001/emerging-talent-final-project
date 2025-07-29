@@ -1,25 +1,28 @@
-import { Pool } from 'pg';
+import mysql, { RowDataPacket, ResultSetHeader, OkPacket } from 'mysql2/promise';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 
-// 加载 .env 文件
+// Load .env file
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
-// 数据库连接配置
-const pool = new Pool({
-  user: process.env.DB_USER || 'postgres',
+// Database connection configuration
+const pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'portfolio_db',
-  password: process.env.DB_PASSWORD || 'password',
-  port: parseInt(process.env.DB_PORT || '5432'),
+  port: parseInt(process.env.DB_PORT || '3306'),
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
 });
 
-// 测试数据库连接
+// Test database connection
 export async function testConnection() {
   try {
-    const client = await pool.connect();
-    await client.query('SELECT NOW()');
-    client.release();
+    const connection = await pool.getConnection();
+    await connection.query('SELECT NOW()');
+    connection.release();
     console.log('Database connected successfully');
   } catch (error) {
     console.error('Database connection failed:', error);
@@ -27,30 +30,36 @@ export async function testConnection() {
   }
 }
 
-// 执行查询的通用函数
+// Execute query with parameters
 export async function query(text: string, params?: any[]) {
   const start = Date.now();
   try {
-    const res = await pool.query(text, params);
+    const [rows, fields] = await pool.execute(text, params);
     const duration = Date.now() - start;
-    console.log('Executed query', { text, duration, rows: res.rowCount });
-    return res;
+    console.log('Executed query', { text, duration, rows: Array.isArray(rows) ? rows.length : 1 });
+    return { rows, fields };
   } catch (error) {
     console.error('Query error:', error);
     throw error;
   }
 }
 
-// 获取单个结果
+// Get single result
 export async function getOne(text: string, params?: any[]) {
-  const res = await query(text, params);
-  return res.rows[0];
+  const result = await query(text, params);
+  return (result.rows as RowDataPacket[])[0];
 }
 
-// 获取多个结果
+// Get multiple results
 export async function getMany(text: string, params?: any[]) {
-  const res = await query(text, params);
-  return res.rows;
+  const result = await query(text, params);
+  return result.rows as RowDataPacket[];
+}
+
+// Execute INSERT/UPDATE/DELETE queries
+export async function execute(text: string, params?: any[]) {
+  const result = await query(text, params);
+  return result.rows as ResultSetHeader;
 }
 
 export default pool; 

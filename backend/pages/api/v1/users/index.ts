@@ -1,11 +1,9 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getMany, getOne, query } from '../../../../lib/db';
-import { errorHandler, validateRequest, corsMiddleware } from '../../../../middleware';
+import { errorHandler, validateRequest, middleware } from '../../../../middleware/middleware';
 import { User } from '../../../../type';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // CORS处理
-  if (corsMiddleware(req, res)) return;
 
   try {
     switch (req.method) {
@@ -23,6 +21,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
 // 获取所有用户
 async function getUsers(req: NextApiRequest, res: NextApiResponse) {
+  console.log('getUsers');
   const users = await getMany(
     'SELECT user_id, first_name, last_name, email, created_at FROM users ORDER BY created_at DESC'
   );

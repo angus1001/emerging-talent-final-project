@@ -149,10 +149,16 @@ export function filterBy<T>(array: T[], filters: Partial<T>): T[] {
       }
       
       if (typeof filterValue === 'string') {
-        return itemValue.toString().toLowerCase().includes(filterValue.toLowerCase());
+        if (typeof itemValue === 'string') {
+          return itemValue.toLowerCase().includes(filterValue.toLowerCase());
+        }
+        if (itemValue != null && typeof itemValue === 'number') {
+          return itemValue.toString().toLowerCase().includes(filterValue.toLowerCase());
+        }
+        return false;
       }
-      
+
       return itemValue === filterValue;
     });
   });
-} 
+}

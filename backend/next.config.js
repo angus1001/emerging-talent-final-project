@@ -11,6 +11,10 @@ const nextConfig = {
     DB_PORT: process.env.DB_PORT,
     JWT_SECRET: process.env.JWT_SECRET,
   },
+  // Set default port to 3500
+  serverRuntimeConfig: {
+    port: process.env.PORT || 3500,
+  },
 }
 
 module.exports = nextConfig 

@@ -1,10 +1,9 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getOne, query } from '../../../../lib/db';
-import { errorHandler, validateRequest, corsMiddleware } from '../../../../middleware';
+import { errorHandler, validateRequest  } from '../../../../middleware/middleware';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // CORS处理
-  if (corsMiddleware(req, res)) return;
+  
 
   const { userId } = req.query;
 
