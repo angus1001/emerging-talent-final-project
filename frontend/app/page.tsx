@@ -4,11 +4,13 @@ import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Plus, TrendingUp, DollarSign, PieChart, BarChart3 } from "lucide-react"
+import { TrendingUp, TrendingDown, DollarSign, PieChart, BarChart3 } from "lucide-react"
 import PortfolioOverview from "@/components/portfolio-overview"
-import PerformanceCharts from "@/components/performance-charts"
 import AssetManagement from "@/components/asset-management"
-import AddAssetDialog from "@/components/add-asset-dialog"
+import Navigation from "@/components/navigation"
+import PortfolioInsights from "@/components/portfolio-insights"
+import StockDetailModal from "@/components/stock-detail-modal"
+import { getUserData } from "@/lib/user-data"
 
 // Mock portfolio data
 const mockPortfolio = {
@@ -89,25 +91,9 @@ const mockPortfolio = {
 
 export default function PortfolioManagement() {
   const [portfolio, setPortfolio] = useState(mockPortfolio)
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-
-  const handleAddAsset = (newAsset: any) => {
-    const asset = {
-      ...newAsset,
-      id: Date.now().toString(),
-      totalValue: newAsset.quantity * newAsset.currentPrice,
-      gain: (newAsset.currentPrice - newAsset.purchasePrice) * newAsset.quantity,
-      gainPercent: ((newAsset.currentPrice - newAsset.purchasePrice) / newAsset.purchasePrice) * 100,
-    }
-
-    setPortfolio((prev) => ({
-      ...prev,
-      assets: [...prev.assets, asset],
-      totalValue: prev.totalValue + asset.totalValue,
-      totalGain: prev.totalGain + asset.gain,
-    }))
-    setIsAddDialogOpen(false)
-  }
+  const [selectedStock, setSelectedStock] = useState<any>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const currentUser = getUserData() // Get consistent user data
 
   const handleRemoveAsset = (assetId: string) => {
     const assetToRemove = portfolio.assets.find((asset) => asset.id === assetId)
@@ -121,8 +107,52 @@ export default function PortfolioManagement() {
     }
   }
 
+  const openStockModal = (asset: any) => {
+    // Convert portfolio asset to stock format for the modal
+    const stockData = {
+      id: asset.id,
+      symbol: asset.symbol,
+      name: asset.name,
+      price: asset.currentPrice,
+      change: asset.gain / asset.quantity,
+      changePercent: asset.gainPercent,
+      volume: "N/A", // Portfolio assets don't have volume data
+      marketCap: "N/A", // Portfolio assets don't have market cap data
+      sector: asset.sector || "Unknown",
+      description: `${asset.name} - Portfolio holding of ${asset.quantity} shares`
+    }
+    setSelectedStock(stockData)
+    setIsModalOpen(true)
+  }
+
+  const closeStockModal = () => {
+    setIsModalOpen(false)
+    setSelectedStock(null)
+  }
+
+  const handleBuy = (orderData: any) => {
+    console.log(`Buy order for ${orderData.symbol}:`, orderData.orderDetails)
+    // Here you would implement the buy logic with the detailed order information
+    // orderData.orderDetails contains: action, quantity, price, orderType, duration, totalValue
+  }
+
+  const handleSell = (orderData: any) => {
+    console.log(`Sell order for ${orderData.symbol}:`, orderData.orderDetails)
+    // Here you would implement the sell logic with the detailed order information
+    // orderData.orderDetails contains: action, quantity, price, orderType, duration, totalValue
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Navigation */}
+      <Navigation 
+        user={currentUser}
+        onHomeClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        onMarketsClick={() => window.location.href = "/markets"}
+        onProfileClick={() => window.location.href = "/profile"}
+        onLogout={() => console.log("User logged out")}
+      />
+      
       <div className="container mx-auto p-6">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
@@ -130,10 +160,6 @@ export default function PortfolioManagement() {
             <h1 className="text-3xl font-bold text-gray-900">Portfolio Management</h1>
             <p className="text-gray-600 mt-2">Manage your financial portfolio with real-time insights</p>
           </div>
-          <Button onClick={() => setIsAddDialogOpen(true)} className="flex items-center gap-2">
-            <Plus className="w-4 h-4" />
-            Add Asset
-          </Button>
         </div>
 
         {/* Portfolio Summary Cards */}
@@ -185,30 +211,89 @@ export default function PortfolioManagement() {
           </Card>
         </div>
 
-        {/* Main Content Tabs */}
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="overview">Portfolio Overview</TabsTrigger>
-            <TabsTrigger value="performance">Performance</TabsTrigger>
-            <TabsTrigger value="manage">Manage Assets</TabsTrigger>
-          </TabsList>
+        {/* Global Market Indices */}
+        <div className="bg-white border border-gray-200 rounded-lg p-4 mb-8">
+          <div className="flex items-center justify-between flex-wrap gap-6">
+            <div className="flex items-center space-x-8 flex-wrap gap-4">
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium text-gray-900">S&P 500</span>
+                <span className="text-sm text-gray-600">5,847.23</span>
+                <span className="text-xs text-green-600 flex items-center">
+                  <TrendingUp className="w-3 h-3 mr-1" />
+                  +0.82%
+                </span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium text-gray-900">NASDAQ</span>
+                <span className="text-sm text-gray-600">18,972.42</span>
+                <span className="text-xs text-green-600 flex items-center">
+                  <TrendingUp className="w-3 h-3 mr-1" />
+                  +1.24%
+                </span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium text-gray-900">DOW</span>
+                <span className="text-sm text-gray-600">42,863.86</span>
+                <span className="text-xs text-green-600 flex items-center">
+                  <TrendingUp className="w-3 h-3 mr-1" />
+                  +0.47%
+                </span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium text-gray-900">FTSE 100</span>
+                <span className="text-sm text-gray-600">8,247.35</span>
+                <span className="text-xs text-red-600 flex items-center">
+                  <TrendingDown className="w-3 h-3 mr-1" />
+                  -0.23%
+                </span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium text-gray-900">Nikkei 225</span>
+                <span className="text-sm text-gray-600">38,923.47</span>
+                <span className="text-xs text-green-600 flex items-center">
+                  <TrendingUp className="w-3 h-3 mr-1" />
+                  +0.61%
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
 
-          <TabsContent value="overview">
-            <PortfolioOverview portfolio={portfolio} />
-          </TabsContent>
+        {/* Main Layout: Insights Left, Content Right */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Portfolio Insights - Left Side */}
+          <div className="lg:col-span-4">
+            <PortfolioInsights portfolio={portfolio} />
+          </div>
 
-          <TabsContent value="performance">
-            <PerformanceCharts portfolio={portfolio} />
-          </TabsContent>
+          {/* Main Content Tabs - Right Side */}
+          <div className="lg:col-span-8">
+            <Tabs defaultValue="overview" className="space-y-6">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="overview">Portfolio Overview & Performance</TabsTrigger>
+                <TabsTrigger value="manage">Manage Assets</TabsTrigger>
+              </TabsList>
 
-          <TabsContent value="manage">
-            <AssetManagement assets={portfolio.assets} onRemoveAsset={handleRemoveAsset} />
-          </TabsContent>
-        </Tabs>
+              <TabsContent value="overview">
+                <PortfolioOverview portfolio={portfolio} onStockClick={openStockModal} />
+              </TabsContent>
 
-        {/* Add Asset Dialog */}
-        <AddAssetDialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen} onAddAsset={handleAddAsset} />
+              <TabsContent value="manage">
+                <AssetManagement assets={portfolio.assets} onRemoveAsset={handleRemoveAsset} />
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
       </div>
+
+      {/* Stock Detail Modal */}
+      <StockDetailModal
+        stock={selectedStock}
+        isOpen={isModalOpen}
+        onClose={closeStockModal}
+        onBuy={handleBuy}
+        onSell={handleSell}
+      />
     </div>
   )
 }
