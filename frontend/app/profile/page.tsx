@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -15,22 +16,23 @@ import {
   Briefcase,
   Edit,
   Settings,
-  CreditCard
+  CreditCard,
+  Loader2
 } from "lucide-react"
 import Navigation from "@/components/navigation"
-import { getUserData } from "@/lib/user-data"
+import { EditUserDialog } from "@/components/edit-user-dialog"
+import { ToastContainer, useToast } from "@/components/toast"
+import { useUserData } from "@/hooks/use-user-data"
+import { getUserDataSync } from "@/lib/user-data"
 
 // Additional profile data that extends the base user data
 const additionalProfileData = {
-  phone: "+1 (555) 123-4567",
-  location: "San Francisco, CA",
   occupation: "Financial Analyst",
   company: "Investment Corp",
   bio: "Experienced financial analyst with a passion for portfolio management and investment strategies. Focused on long-term wealth building and risk management.",
   preferences: {
     currency: "USD",
     timezone: "PST",
-    language: "English",
     notifications: {
       email: true,
       push: true,
@@ -67,12 +69,79 @@ const additionalProfileData = {
 }
 
 export default function UserProfilePage() {
-  const currentUser = getUserData() // Get consistent user data
+  const { user, loading, error, refetchUser, updateUser } = useUserData()
+  const fallbackUser = getUserDataSync() // For navigation component
+  const [editDialogOpen, setEditDialogOpen] = useState(false)
+  const { toasts, removeToast, showSuccess, showError } = useToast()
+
+  // Enhanced update user function with toast notifications
+  const handleUpdateUser = async (userData: Parameters<typeof updateUser>[0]) => {
+    try {
+      await updateUser(userData)
+      showSuccess('Profile updated successfully!')
+    } catch (error) {
+      showError('Failed to update profile. Please try again.')
+    }
+  }
   
-  // Merge base user data with additional profile data
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navigation 
+          user={fallbackUser}
+          onHomeClick={() => window.location.href = "/"}
+          onMarketsClick={() => window.location.href = "/markets"}
+          onAccountClick={() => window.location.href = "/account"}
+          onLogout={() => console.log("User logged out")}
+        />
+        <div className="container mx-auto p-6 flex items-center justify-center">
+          <div className="flex items-center space-x-2">
+            <Loader2 className="h-6 w-6 animate-spin" />
+            <span>Loading user profile...</span>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Show error state
+  if (error || !user) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navigation 
+          user={fallbackUser}
+          onHomeClick={() => window.location.href = "/"}
+          onMarketsClick={() => window.location.href = "/markets"}
+          onAccountClick={() => window.location.href = "/account"}
+          onLogout={() => console.log("User logged out")}
+        />
+        <div className="container mx-auto p-6">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <p className="text-red-800">
+              {error || "Failed to load user data"}
+            </p>
+            <Button 
+              onClick={refetchUser} 
+              variant="outline" 
+              className="mt-2"
+            >
+              Try Again
+            </Button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+  
+  // Merge API user data with additional profile data
   const userData = {
-    ...currentUser,
-    ...additionalProfileData
+    ...user,
+    ...additionalProfileData,
+    preferences: {
+      ...additionalProfileData.preferences,
+      language: user.language || "English"
+    }
   }
 
   const handleHomeClick = () => {
@@ -95,7 +164,7 @@ export default function UserProfilePage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation 
-        user={currentUser}
+        user={user}
         onHomeClick={handleHomeClick}
         onMarketsClick={handleMarketsClick}
         onAccountClick={() => window.location.href = "/account"}
@@ -133,7 +202,11 @@ export default function UserProfilePage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Button className="w-full" variant="outline">
+                <Button 
+                  className="w-full" 
+                  variant="outline"
+                  onClick={() => setEditDialogOpen(true)}
+                >
                   <Edit className="w-4 h-4 mr-2" />
                   Edit Profile
                 </Button>
@@ -158,20 +231,24 @@ export default function UserProfilePage() {
                     <p className="text-sm text-gray-600">{userData.email}</p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-3">
-                  <Phone className="w-4 h-4 text-gray-500" />
-                  <div>
-                    <p className="text-sm font-medium">Phone</p>
-                    <p className="text-sm text-gray-600">{userData.phone}</p>
+                {userData.phone && (
+                  <div className="flex items-center space-x-3">
+                    <Phone className="w-4 h-4 text-gray-500" />
+                    <div>
+                      <p className="text-sm font-medium">Phone</p>
+                      <p className="text-sm text-gray-600">{userData.phone}</p>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <MapPin className="w-4 h-4 text-gray-500" />
-                  <div>
-                    <p className="text-sm font-medium">Location</p>
-                    <p className="text-sm text-gray-600">{userData.location}</p>
+                )}
+                {userData.location && (
+                  <div className="flex items-center space-x-3">
+                    <MapPin className="w-4 h-4 text-gray-500" />
+                    <div>
+                      <p className="text-sm font-medium">Location</p>
+                      <p className="text-sm text-gray-600">{userData.location}</p>
+                    </div>
                   </div>
-                </div>
+                )}
                 <div className="flex items-center space-x-3">
                   <Calendar className="w-4 h-4 text-gray-500" />
                   <div>
@@ -289,6 +366,17 @@ export default function UserProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* Edit User Dialog */}
+      <EditUserDialog
+        user={user}
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        onUpdate={handleUpdateUser}
+      />
+
+      {/* Toast Notifications */}
+      <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   )
 }
