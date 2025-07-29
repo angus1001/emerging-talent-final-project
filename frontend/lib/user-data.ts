@@ -67,6 +67,7 @@ export const getUserDataSync = (): User => {
   return fallbackUser;
 };
 
+
 // Update user data
 export const updateUserData = async (userData: Partial<{
   first_name: string;
