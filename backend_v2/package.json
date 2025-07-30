@@ -8,7 +8,17 @@
     "build": "next build",
     "start": "next start -p 3500",
     "prisma:migrate": "prisma migrate dev --schema=prisma/schema.prisma",
-    "prisma:generate": "prisma generate --schema=prisma/schema.prisma"
+    "prisma:generate": "prisma generate --schema=prisma/schema.prisma",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:users": "ts-node __tests__/api/v1/users-basic.test.ts",
+    "test:users:watch": "nodemon --exec 'ts-node __tests__/api/v1/users-basic.test.ts'",
+    "test:login": "ts-node __tests__/api/v1/login.test.ts",
+    "test:stocks": "ts-node __tests__/api/v1/stocks.test.ts",
+    "test:orders": "ts-node __tests__/api/v1/orders.test.ts",
+    "test:user-detail": "ts-node __tests__/api/v1/user-detail.test.ts",
+    "test:all": "ts-node __tests__/run-all-tests.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.13.0",
@@ -17,7 +27,12 @@
   },
   "devDependencies": {
     "@types/react": "19.1.9",
+    "@types/jest": "^29.5.0",
+    "jest": "^29.5.0",
+    "jest-environment-jsdom": "^29.5.0",
+    "node-mocks-http": "^1.12.1",
     "prisma": "^6.13.0",
+    "ts-jest": "^29.1.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
   }
