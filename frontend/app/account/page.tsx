@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator"
 import { useUserData } from "@/hooks/use-user-data"
 import { usePortfolioSummary, useUserHoldings, useUserWatchlist } from "@/hooks/use-portfolio-data"
 import { convertApiHoldingsToUserHoldings, formatHoldingValue, formatChange } from "@/lib/portfolio-data"
+import { stockApi, ApiStock } from "@/lib/api"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { 
   User, 
@@ -25,80 +26,13 @@ import {
   Activity,
   Eye,
   Briefcase,
-  Loader2
+  Loader2,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react"
 import Navigation from "@/components/navigation"
 import StockDetailModal from "@/components/stock-detail-modal"
 import { getInitials } from "@/lib/utils"
-
-// Mock market data (same as markets page)
-const marketData = [
-  {
-    id: "1",
-    symbol: "AAPL",
-    name: "Apple Inc.",
-    price: 213.88,
-    change: 0.12,
-    changePercent: 0.056,
-    volume: "40.3M",
-    marketCap: "3.19T",
-    sector: "Technology",
-    description: "Technology company that designs, develops, and sells consumer electronics, computer software, and online services.",
-    exchange: "NASDAQ"
-  },
-  {
-    id: "2",
-    symbol: "GOOGL",
-    name: "Alphabet Inc.",
-    price: 142.50,
-    change: -1.25,
-    changePercent: -0.87,
-    volume: "28.1M",
-    marketCap: "1.78T",
-    sector: "Technology",
-    description: "Multinational technology company specializing in Internet-related services and products.",
-    exchange: "NASDAQ"
-  },
-  {
-    id: "3",
-    symbol: "MSFT",
-    name: "Microsoft Corporation",
-    price: 412.80,
-    change: 5.60,
-    changePercent: 1.38,
-    volume: "22.3M",
-    marketCap: "3.06T",
-    sector: "Technology",
-    description: "Technology corporation that develops computer software, consumer electronics, and related services.",
-    exchange: "NASDAQ"
-  },
-  {
-    id: "4",
-    symbol: "TSLA",
-    name: "Tesla Inc.",
-    price: 245.80,
-    change: -8.20,
-    changePercent: -3.23,
-    volume: "82.5M",
-    marketCap: "783.2B",
-    sector: "Automotive",
-    description: "Electric vehicle and clean energy company that designs and manufactures electric cars and energy storage systems.",
-    exchange: "NASDAQ"
-  },
-  {
-    id: "5",
-    symbol: "NVDA",
-    name: "NVIDIA Corporation",
-    price: 118.75,
-    change: 4.25,
-    changePercent: 3.71,
-    volume: "68.9M",
-    marketCap: "2.91T",
-    sector: "Technology",
-    description: "Technology company that designs graphics processing units (GPUs) for gaming, cryptocurrency, and artificial intelligence.",
-    exchange: "NASDAQ"
-  }
-]
 
 export default function AccountPage() {
   const { user, loading: userLoading, error: userError, refetchUser, updateUser } = useUserData()
@@ -109,16 +43,87 @@ export default function AccountPage() {
   const { holdings, loading: holdingsLoading, error: holdingsError } = useUserHoldings(userId)
   const { watchlist, loading: watchlistLoading, error: watchlistError, addToWatchlist, removeFromWatchlist } = useUserWatchlist(userId)
   
+  // State for stocks data
+  const [stocksData, setStocksData] = useState<ApiStock[]>([])
+  const [stocksLoading, setStocksLoading] = useState(true)
+  const [stocksError, setStocksError] = useState<string | null>(null)
+  
   const [selectedStock, setSelectedStock] = useState<any>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [watchlistCurrentPage, setWatchlistCurrentPage] = useState(1)
+  const watchlistItemsPerPage = 5
+
+  // Fetch all stocks data
+  useEffect(() => {
+    const fetchStocks = async () => {
+      try {
+        setStocksLoading(true)
+        setStocksError(null)
+        const stocks = await stockApi.getAllStocks()
+        setStocksData(stocks)
+      } catch (error) {
+        setStocksError(error instanceof Error ? error.message : 'Failed to fetch stocks')
+        console.error('Error fetching stocks:', error)
+      } finally {
+        setStocksLoading(false)
+      }
+    }
+
+    fetchStocks()
+  }, [])
   
   // Convert API holdings to frontend format
   const userHoldings = holdings ? convertApiHoldingsToUserHoldings(holdings) : []
   
-  // Extract watchlist symbols
-  const mockWatchlist = watchlist?.map(item => 
-    item.stock.symbol
-  ) || []
+  // Helper function to convert API stock to frontend format
+  const convertApiStockToFrontend = (apiStock: ApiStock) => {
+    // Calculate change and changePercent from history_price if available
+    let change = 0
+    let changePercent = 0
+    
+    if (apiStock.history_price && apiStock.history_price.length >= 2) {
+      const currentPrice = apiStock.current_price
+      const previousPrice = apiStock.history_price[apiStock.history_price.length - 2].price
+      change = currentPrice - previousPrice
+      changePercent = (change / previousPrice) * 100
+    }
+    
+    return {
+      id: apiStock.stock_id.toString(),
+      symbol: apiStock.symbol,
+      name: apiStock.company_name,
+      price: apiStock.current_price,
+      change: change,
+      changePercent: changePercent,
+      volume: apiStock.volume,
+      marketCap: apiStock.market_cap,
+      sector: apiStock.sector,
+      description: apiStock.company_info,
+      exchange: apiStock.exchange
+    }
+  }
+  
+  // Get watchlist stock data from API
+  const watchlistStockData = watchlist?.map(item => convertApiStockToFrontend(item.stock)) || []
+  
+  // Watchlist pagination logic
+  const watchlistTotalPages = Math.ceil(watchlistStockData.length / watchlistItemsPerPage)
+  const watchlistStartIndex = (watchlistCurrentPage - 1) * watchlistItemsPerPage
+  const watchlistEndIndex = watchlistStartIndex + watchlistItemsPerPage
+  const paginatedWatchlistData = watchlistStockData.slice(watchlistStartIndex, watchlistEndIndex)
+
+  const handleWatchlistPreviousPage = () => {
+    setWatchlistCurrentPage(prev => Math.max(1, prev - 1))
+  }
+
+  const handleWatchlistNextPage = () => {
+    setWatchlistCurrentPage(prev => Math.min(watchlistTotalPages, prev + 1))
+  }
+
+  // Reset watchlist page when watchlist data changes
+  useEffect(() => {
+    setWatchlistCurrentPage(1)
+  }, [watchlist?.length])
   
   // Account information from portfolio API
   const accountInfo = {
@@ -161,32 +166,42 @@ export default function AccountPage() {
   const handleWatchlistToggle = async (stock: any) => {
     const isInWatchlist = watchlist?.some(item => item.stock.symbol === stock.symbol)
     
-    if (isInWatchlist) {
-      // Remove from watchlist
-      const watchlistItem = watchlist?.find(item => item.stock.symbol === stock.symbol)
-      if (watchlistItem) {
-        const success = await removeFromWatchlist(watchlistItem.watchlist_id)
-        if (success) {
-          console.log(`Removed ${stock.symbol} from watchlist`)
+    try {
+      if (isInWatchlist) {
+        // Remove from watchlist
+        const watchlistItem = watchlist?.find(item => item.stock.symbol === stock.symbol)
+        if (watchlistItem) {
+          const success = await removeFromWatchlist(watchlistItem.watchlist_id)
+          if (success) {
+            console.log(`Removed ${stock.symbol} from watchlist`)
+          } else {
+            console.error(`Failed to remove ${stock.symbol} from watchlist`)
+          }
+        }
+      } else {
+        // Add to watchlist - need to find the stock_id from stocksData
+        const fullStockData = stocksData.find(s => s.symbol === stock.symbol)
+        const watchlistData = {
+          stock_id: fullStockData?.stock_id || parseInt(stock.id),
+          stock: fullStockData || stock,
+          display_name: stock.name,
+          created_at: new Date().toISOString()
+        }
+        const result = await addToWatchlist(watchlistData)
+        if (result) {
+          console.log(`Added ${stock.symbol} to watchlist`)
+        } else {
+          console.error(`Failed to add ${stock.symbol} to watchlist`)
         }
       }
-    } else {
-      // Add to watchlist
-      const watchlistData = {
-        stock_id: stock.id || 1, // You may need to map this properly based on your stock data
-        stock: stock,
-        display_name: stock.name,
-        created_at: new Date().toISOString()
-      }
-      const result = await addToWatchlist(watchlistData)
-      if (result) {
-        console.log(`Added ${stock.symbol} to watchlist`)
-      }
+    } catch (error) {
+      console.error('Error toggling watchlist:', error)
+      // Don't set global error state for watchlist operations
     }
   }
 
-  // Loading state
-  if (userLoading || portfolioLoading || holdingsLoading || watchlistLoading) {
+  // Loading state - include stocks loading
+  if (userLoading || portfolioLoading || holdingsLoading || watchlistLoading || stocksLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="flex items-center space-x-2">
@@ -197,14 +212,14 @@ export default function AccountPage() {
     )
   }
 
-  // Error state
-  if (userError || portfolioError || holdingsError || watchlistError) {
+  // Error state - include stocks error
+  if (userError || portfolioError || holdingsError || watchlistError || stocksError) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-lg font-semibold text-red-600 mb-2">Error Loading Account</h2>
           <p className="text-gray-600">
-            {userError || portfolioError || holdingsError || watchlistError}
+            {userError || portfolioError || holdingsError || watchlistError || stocksError}
           </p>
         </div>
       </div>
@@ -218,9 +233,6 @@ export default function AccountPage() {
   const handleSell = (orderData: any) => {
     console.log(`Sell order:`, orderData.orderDetails)
   }
-
-  // Get watchlist stock data
-  const watchlistStockData = marketData.filter(stock => mockWatchlist.includes(stock.symbol))
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -382,8 +394,19 @@ export default function AccountPage() {
                             <div>
                               <button
                                 onClick={() => {
-                                  const stockData = marketData.find(stock => stock.symbol === holding.symbol)
-                                  if (stockData) openStockModal(stockData)
+                                  // Find stock data from holdings API data first, then fallback to stocksData
+                                  const holdingStock = holdings?.find(h => h.stock.symbol === holding.symbol)?.stock
+                                  if (holdingStock) {
+                                    const stockData = convertApiStockToFrontend(holdingStock)
+                                    openStockModal(stockData)
+                                  } else {
+                                    // Fallback to all stocks data
+                                    const stockFromAll = stocksData.find(stock => stock.symbol === holding.symbol)
+                                    if (stockFromAll) {
+                                      const stockData = convertApiStockToFrontend(stockFromAll)
+                                      openStockModal(stockData)
+                                    }
+                                  }
                                 }}
                                 className="font-bold text-lg text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
                               >
@@ -429,8 +452,8 @@ export default function AccountPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {watchlistStockData.length > 0 ? (
-                        watchlistStockData.map((stock) => {
+                      {paginatedWatchlistData.length > 0 ? (
+                        paginatedWatchlistData.map((stock) => {
                           const watchlistItem = watchlist?.find(item => item.stock.symbol === stock.symbol)
                           return (
                             <div key={stock.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
@@ -480,6 +503,40 @@ export default function AccountPage() {
                         </div>
                       )}
                     </div>
+
+                    {/* Watchlist Pagination Controls */}
+                    {watchlistStockData.length > watchlistItemsPerPage && (
+                      <div className="mt-4 flex items-center justify-between border-t pt-3">
+                        <div className="text-xs text-gray-600">
+                          {watchlistStartIndex + 1}-{Math.min(watchlistEndIndex, watchlistStockData.length)} of {watchlistStockData.length}
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleWatchlistPreviousPage}
+                            disabled={watchlistCurrentPage === 1}
+                            className="h-8 px-3"
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                          </Button>
+                          
+                          <span className="text-sm px-3">
+                            {watchlistCurrentPage}/{watchlistTotalPages}
+                          </span>
+
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleWatchlistNextPage}
+                            disabled={watchlistCurrentPage === watchlistTotalPages}
+                            className="h-8 px-3"
+                          >
+                            <ChevronRight className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>

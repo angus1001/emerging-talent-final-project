@@ -94,45 +94,7 @@ export default function PortfolioOverview({ portfolio, onStockClick }: Portfolio
 
   return (
     <div className="space-y-6">
-      {/* Portfolio Performance Chart */}
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle>Portfolio Performance</CardTitle>
-          <CardDescription>Historical portfolio value and gains over time</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ChartContainer
-            config={{
-              value: {
-                label: "Portfolio Value",
-                color: "hsl(var(--chart-1))",
-              },
-              gain: {
-                label: "Total Gain",
-                color: "hsl(var(--chart-2))",
-              },
-            }}
-            className="h-[300px]"
-          >
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={historicalData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Line
-                  type="monotone"
-                  dataKey="value"
-                  stroke="var(--color-value)"
-                  strokeWidth={2}
-                  name="Portfolio Value"
-                />
-                <Line type="monotone" dataKey="gain" stroke="var(--color-gain)" strokeWidth={2} name="Total Gain" />
-              </LineChart>
-            </ResponsiveContainer>
-          </ChartContainer>
-        </CardContent>
-      </Card>
+      
 
       {/* Asset Allocation and Top Performers */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -149,7 +111,7 @@ export default function PortfolioOverview({ portfolio, onStockClick }: Portfolio
                   label: "Allocation",
                 },
               }}
-              className="h-[300px]"
+              className="h-[200px]"
             >
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -231,6 +193,45 @@ export default function PortfolioOverview({ portfolio, onStockClick }: Portfolio
           </CardContent>
         </Card>
       </div>
+      {/* Portfolio Performance Chart */}
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle>Portfolio Performance</CardTitle>
+          <CardDescription>Historical portfolio value and gains over time</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ChartContainer
+            config={{
+              value: {
+                label: "Portfolio Value",
+                color: "hsl(var(--chart-1))",
+              },
+              gain: {
+                label: "Total Gain",
+                color: "hsl(var(--chart-2))",
+              },
+            }}
+            className="h-[300px]"
+          >
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={historicalData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Line
+                  type="monotone"
+                  dataKey="value"
+                  stroke="var(--color-value)"
+                  strokeWidth={2}
+                  name="Portfolio Value"
+                />
+                <Line type="monotone" dataKey="gain" stroke="var(--color-gain)" strokeWidth={2} name="Total Gain" />
+              </LineChart>
+            </ResponsiveContainer>
+          </ChartContainer>
+        </CardContent>
+      </Card>
     </div>
   )
 }

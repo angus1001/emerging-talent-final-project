@@ -214,7 +214,9 @@ export function useUserWatchlist(userId: number) {
       setWatchlist([...watchlist, newItem]);
       return newItem;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add to watchlist');
+      console.error('Failed to add to watchlist:', err);
+      // Don't set global error state for individual watchlist operations
+      // setError(err instanceof Error ? err.message : 'Failed to add to watchlist');
       return null;
     }
   };
@@ -225,7 +227,9 @@ export function useUserWatchlist(userId: number) {
       setWatchlist(watchlist.filter(item => item.watchlist_id !== watchlistId));
       return true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to remove from watchlist');
+      console.error('Failed to remove from watchlist:', err);
+      // Don't set global error state for individual watchlist operations
+      // setError(err instanceof Error ? err.message : 'Failed to remove from watchlist');
       return false;
     }
   };
