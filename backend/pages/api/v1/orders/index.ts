@@ -1,53 +1,183 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getMany, getOne, query } from '../../../../lib/db';
-import { errorHandler, validateRequest } from '../../../../middleware/middleware';
-import { User } from '../../../../type';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  try {
-    switch (req.method) {
-      case 'GET':
-        return await getUsers(req, res);
-      case 'POST':
-        return await createUser(req, res);
-      default:
-        return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method === 'GET') {
+    // 获取所有订单（管理员功能）
+    try {
+      const orders = await prisma.order.findMany({
+        include: {
+          user: true,
+          stock: true,
+        },
+        orderBy: {
+          date: 'desc',
+        },
+      });
+      
+      return res.status(200).json(orders);
+    } catch (error) {
+      return res.status(500).json({ error: 'Internal server error' });
     }
-  } catch (error) {
-    return errorHandler(error, req, res);
-  }
-}
-
-// Get all users
-async function getUsers(req: NextApiRequest, res: NextApiResponse) {
-  const users = await getMany(
-    'SELECT user_id, first_name, last_name, email, created_at FROM users ORDER BY created_at DESC'
-  );
-  
-  return res.status(200).json(users);
-}
-
-// Create new user
-async function createUser(req: NextApiRequest, res: NextApiResponse) {
-  const requiredFields = ['first_name', 'last_name', 'password', 'email'];
-  const validationError = validateRequest(req, res, requiredFields);
-  if (validationError) return validationError;
-
-  const { first_name, last_name, password, email } = req.body;
-
-  // Check if email already exists
-  const existingUser = await getOne('SELECT user_id FROM users WHERE email = ?', [email]);
-  if (existingUser) {
-    return res.status(400).json({ error: 'Email already exists' });
   }
 
-  // Create new user
-  const newUser = await getOne(
-    `INSERT INTO users (first_name, last_name, password, email, created_at) 
-     VALUES (?, ?, ?, ?, NOW()) 
-     RETURNING user_id, first_name, last_name, email, created_at`,
-    [first_name, last_name, password, email]
-  );
+  if (req.method === 'POST') {
+    // 创建新订单
+    const { 
+      user_id, 
+      stock_id, 
+      order_type, 
+      quantity, 
+      price_per_share, 
+      duration = 'DAY' 
+    } = req.body;
 
-  return res.status(201).json(newUser);
+    // 验证必需字段
+    if (!user_id || !stock_id || !order_type || !quantity || !price_per_share) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // 验证订单类型
+    if (!['BUY', 'SELL'].includes(order_type)) {
+      return res.status(400).json({ error: 'Invalid order type' });
+    }
+
+    // 验证数量
+    if (quantity <= 0) {
+      return res.status(400).json({ error: 'Quantity must be positive' });
+    }
+
+    // 验证价格
+    if (price_per_share <= 0) {
+      return res.status(400).json({ error: 'Price must be positive' });
+    }
+
+    try {
+      // 检查用户和股票是否存在
+      const user = await prisma.user.findUnique({
+        where: { user_id: parseInt(user_id) },
+      });
+
+      const stock = await prisma.stock.findUnique({
+        where: { stock_id: parseInt(stock_id) },
+      });
+
+      if (!user) {
+        return res.status(400).json({ error: 'User not found' });
+      }
+
+      if (!stock) {
+        return res.status(400).json({ error: 'Stock not found' });
+      }
+
+      const totalValue = quantity * price_per_share;
+
+      // 如果是买入订单，检查用户是否有足够的现金
+      if (order_type === 'BUY') {
+        if (!user.cash || user.cash < totalValue) {
+          return res.status(400).json({ error: 'Insufficient funds' });
+        }
+      }
+
+      // 如果是卖出订单，检查用户是否有足够的股票
+      if (order_type === 'SELL') {
+        const userHolding = await prisma.holding.findFirst({
+          where: { 
+            user_id: parseInt(user_id),
+            stock_id: parseInt(stock_id),
+          },
+        });
+
+        if (!userHolding || userHolding.holding_number < quantity) {
+          return res.status(400).json({ error: 'Insufficient shares' });
+        }
+      }
+
+      // 创建订单
+      const order = await prisma.order.create({
+        data: {
+          user_id: parseInt(user_id),
+          stock_id: parseInt(stock_id),
+          order_type,
+          quantity: parseInt(quantity),
+          price_per_share: parseFloat(price_per_share),
+          total_value: totalValue,
+          date: new Date(),
+          status: 'PENDING',
+          duration,
+        },
+        include: {
+          user: true,
+          stock: true,
+        },
+      });
+      // 买入后扣减用户现金并更新持仓
+      if (order_type === 'BUY') {
+        // 使用事务确保数据一致性
+        await prisma.$transaction(async (tx) => {
+          // 扣减用户现金
+          await tx.user.update({
+            where: { user_id: user.user_id },
+            data: {
+              cash: {
+                decrement: totalValue
+              }
+            }
+          });
+
+          // 查找用户持仓
+          let holding = await tx.holding.findFirst({
+            where: {
+              user_id: user.user_id,
+              stock_id: stock.stock_id
+            }
+          });
+
+          const newTotalValue = quantity * price_per_share;
+
+          if (!holding) {
+            // 如果没有持仓，创建新持仓
+            await tx.holding.create({
+              data: {
+                user_id: user.user_id,
+                stock_id: stock.stock_id,
+                holding_number: quantity,
+                average_price: price_per_share,
+                cash: newTotalValue, // 持仓的现金价值
+                total_value: newTotalValue,
+                last_updated: new Date()
+              }
+            });
+          } else {
+            // 已有持仓，更新持仓数量和平均买入价格
+            const oldTotalShares = holding.holding_number;
+            const oldAvgPrice = holding.average_price;
+            const newTotalShares = oldTotalShares + quantity;
+            // 重新计算加权平均买入价格
+            const newAvgPrice = ((oldTotalShares * oldAvgPrice) + (quantity * price_per_share)) / newTotalShares;
+            const updatedTotalValue = newTotalShares * newAvgPrice;
+
+            await tx.holding.update({
+              where: { holding_id: holding.holding_id },
+              data: {
+                holding_number: newTotalShares,
+                average_price: newAvgPrice,
+                cash: updatedTotalValue, // 持仓的现金价值
+                total_value: updatedTotalValue,
+                last_updated: new Date()
+              }
+            });
+          }
+        });
+       }
+      return res.status(201).json(order);
+    } catch (error) {
+      return res.status(400).json({ error: 'Invalid order data' });
+    }
+  }
+
+  res.setHeader('Allow', ['GET', 'POST']);
+  res.status(405).end(`Method ${req.method} Not Allowed`);
 } 

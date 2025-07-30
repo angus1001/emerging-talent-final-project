@@ -1,40 +1,49 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getOne } from '../../../../lib/db';
-import { errorHandler  } from '../../../../middleware/middleware';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  
-
   const { stockId } = req.query;
+  const stockIdInt = parseInt(stockId as string);
 
-  if (!stockId || Array.isArray(stockId)) {
+  if (isNaN(stockIdInt)) {
     return res.status(400).json({ error: 'Invalid stock ID' });
   }
 
-  try {
-    switch (req.method) {
-      case 'GET':
-        return await getStockById(req, res, parseInt(stockId));
-      default:
-        return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method === 'GET') {
+    // 获取股票详情
+    try {
+      const stock = await prisma.stock.findUnique({
+        where: { stock_id: stockIdInt },
+        include: {
+          stockPriceHistorys: {
+            orderBy: {
+              date: 'asc'
+            }
+          }
+        }
+      });
+      
+      if (!stock) {
+        return res.status(404).json({ error: 'Stock not found' });
+      }
+      
+      // 构建响应，包含历史价格数据
+      const response = {
+        ...stock,
+        history_price: stock.stockPriceHistorys.map(history => ({
+          date: history.date,
+          close_price: history.close_price
+        }))
+      };
+      
+      return res.status(200).json(response);
+    } catch (error) {
+      return res.status(500).json({ error: 'Internal server error' });
     }
-  } catch (error) {
-    return errorHandler(error, req, res);
-  }
-}
-
-// 根据ID获取股票
-async function getStockById(req: NextApiRequest, res: NextApiResponse, stockId: number) {
-  const stock = await getOne(
-    `SELECT stock_id, symbol, company_name, current_price, last_updated 
-     FROM stocks 
-     WHERE stock_id = $1`,
-    [stockId]
-  );
-
-  if (!stock) {
-    return res.status(404).json({ error: 'Stock not found' });
   }
 
-  return res.status(200).json(stock);
+  res.setHeader('Allow', ['GET']);
+  res.status(405).end(`Method ${req.method} Not Allowed`);
 } 

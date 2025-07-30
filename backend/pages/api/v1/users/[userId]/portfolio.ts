@@ -1,62 +1,65 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getOne, getMany } from '../../../../../lib/db';
-import { errorHandler } from '../../../../../middleware/middleware';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
- 
-
   const { userId } = req.query;
+  const userIdInt = parseInt(userId as string);
 
-  if (!userId || Array.isArray(userId)) {
+  if (isNaN(userIdInt)) {
     return res.status(400).json({ error: 'Invalid user ID' });
   }
 
-  try {
-    switch (req.method) {
-      case 'GET':
-        return await getPortfolioSummary(req, res, parseInt(userId));
-      default:
-        return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method === 'GET') {
+    // 获取用户投资组合摘要
+    try {
+      // 检查用户是否存在
+      const user = await prisma.user.findUnique({
+        where: { user_id: userIdInt },
+      });
+      
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      // 获取用户的所有持仓
+      const holdings = await prisma.holding.findMany({
+        where: { user_id: userIdInt },
+        include: {
+          stock: true,
+        },
+      });
+
+      // 计算总价值
+      let totalStockValue = 0;
+      let cashBalance = 0;
+
+      holdings.forEach(holding => {
+        const currentValue = holding.holding_number * holding.stock.current_price;
+        totalStockValue += currentValue;
+        cashBalance = holding.cash;
+      });
+
+      const totalValue = totalStockValue + cashBalance;
+
+      const portfolioSummary = {
+        total_value: totalValue,
+        cash_balance: cashBalance,
+        stock_value: totalStockValue,
+        holdings: holdings.map(holding => ({
+          ...holding,
+          stock: holding.stock,
+        })),
+        last_updated: new Date().toISOString(),
+      };
+
+      return res.status(200).json(portfolioSummary);
+    } catch (error) {
+      return res.status(500).json({ error: 'Internal server error' });
     }
-  } catch (error) {
-    return errorHandler(error, req, res);
-  }
-}
-
-// 获取用户投资组合摘要
-async function getPortfolioSummary(req: NextApiRequest, res: NextApiResponse, userId: number) {
-  // 检查用户是否存在
-  const user = await getOne('SELECT user_id FROM users WHERE user_id = $1', [userId]);
-  if (!user) {
-    return res.status(404).json({ error: 'User not found' });
   }
 
-  // 获取持仓信息
-  const holdings = await getMany(
-    `SELECT h.holding_id, h.user_id, h.stock_id, h.total_shares, h.average_price, h.last_updated,
-            s.symbol, s.company_name, s.current_price
-     FROM holdings h
-     JOIN stocks s ON h.stock_id = s.stock_id
-     WHERE h.user_id = $1 AND h.total_shares > 0
-     ORDER BY s.symbol`,
-    [userId]
-  );
-
-  // 计算股票总价值
-  const stockValue = holdings.reduce((total, holding) => {
-    return total + (holding.total_shares * holding.current_price);
-  }, 0);
-
-  // 获取现金余额（这里假设有一个cash_balance字段，实际可能需要从其他表获取）
-  const cashBalance = 10000; // 示例值，实际应该从数据库获取
-
-  const portfolioSummary = {
-    total_value: stockValue + cashBalance,
-    cash_balance: cashBalance,
-    stock_value: stockValue,
-    holdings: holdings,
-    last_updated: new Date().toISOString()
-  };
-
-  return res.status(200).json(portfolioSummary);
+  res.setHeader('Allow', ['GET']);
+  res.status(405).end(`Method ${req.method} Not Allowed`);
 } 

@@ -1,88 +1,103 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getOne, getMany, query } from '../../../../../lib/db';
-import { errorHandler, validateRequest } from '../../../../../middleware/middleware';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  
-
   const { userId } = req.query;
+  const userIdInt = parseInt(userId as string);
 
-  if (!userId || Array.isArray(userId)) {
+  if (isNaN(userIdInt)) {
     return res.status(400).json({ error: 'Invalid user ID' });
   }
 
-  try {
-    switch (req.method) {
-      case 'GET':
-        return await getWatchlist(req, res, parseInt(userId));
-      case 'POST':
-        return await addToWatchlist(req, res, parseInt(userId));
-      default:
-        return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method === 'GET') {
+    // 获取用户的观察列表
+    try {
+      // 检查用户是否存在
+      const user = await prisma.user.findUnique({
+        where: { user_id: userIdInt },
+      });
+      
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+
+      // 获取用户的观察列表
+      const watchlist = await prisma.watchlist.findMany({
+        where: { user_id: userIdInt },
+        include: {
+          stock: true,
+        },
+        orderBy: {
+          created_at: 'desc',
+        },
+      });
+
+      return res.status(200).json(watchlist);
+    } catch (error) {
+      return res.status(500).json({ error: 'Internal server error' });
     }
-  } catch (error) {
-    return errorHandler(error, req, res);
-  }
-}
-
-// 获取用户的观察列表
-async function getWatchlist(req: NextApiRequest, res: NextApiResponse, userId: number) {
-  // 检查用户是否存在
-  const user = await getOne('SELECT user_id FROM users WHERE user_id = $1', [userId]);
-  if (!user) {
-    return res.status(404).json({ error: 'User not found' });
   }
 
-  // 获取观察列表
-  const watchlist = await getMany(
-    `SELECT w.watchlist_id, w.user_id, w.stock_id, w.display_name, w.added_at,
-            s.symbol, s.company_name, s.current_price
-     FROM watchlist w
-     JOIN stocks s ON w.stock_id = s.stock_id
-     WHERE w.user_id = $1
-     ORDER BY w.added_at DESC`,
-    [userId]
-  );
+  if (req.method === 'POST') {
+    // 添加股票到观察列表
+    const { stock_id, display_name } = req.body;
 
-  return res.status(200).json(watchlist);
-}
+    if (!stock_id) {
+      return res.status(400).json({ error: 'Stock ID is required' });
+    }
 
-// 添加到观察列表
-async function addToWatchlist(req: NextApiRequest, res: NextApiResponse, userId: number) {
-  const requiredFields = ['stock_id'];
-  const validationError = validateRequest(req, res, requiredFields);
-  if (validationError) return validationError;
+    try {
+      // 检查用户是否存在
+      const user = await prisma.user.findUnique({
+        where: { user_id: userIdInt },
+      });
+      
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
 
-  const { stock_id, display_name } = req.body;
+      // 检查股票是否存在
+      const stock = await prisma.stock.findUnique({
+        where: { stock_id: parseInt(stock_id) },
+      });
 
-  // 检查用户是否存在
-  const user = await getOne('SELECT user_id FROM users WHERE user_id = $1', [userId]);
-  if (!user) {
-    return res.status(404).json({ error: 'User not found' });
+      if (!stock) {
+        return res.status(400).json({ error: 'Stock not found' });
+      }
+
+      // 检查是否已经在观察列表中
+      const existingWatchlist = await prisma.watchlist.findFirst({
+        where: {
+          user_id: userIdInt,
+          stock_id: parseInt(stock_id),
+        },
+      });
+
+      if (existingWatchlist) {
+        return res.status(400).json({ error: 'Stock already in watchlist' });
+      }
+
+      // 添加到观察列表
+      const watchlistItem = await prisma.watchlist.create({
+        data: {
+          user_id: userIdInt,
+          stock_id: parseInt(stock_id),
+          display_name: display_name || stock.symbol,
+          created_at: new Date(),
+        },
+        include: {
+          stock: true,
+        },
+      });
+
+      return res.status(201).json(watchlistItem);
+    } catch (error) {
+      return res.status(400).json({ error: 'Invalid input data' });
+    }
   }
 
-  // 检查股票是否存在
-  const stock = await getOne('SELECT stock_id FROM stocks WHERE stock_id = $1', [stock_id]);
-  if (!stock) {
-    return res.status(400).json({ error: 'Stock not found' });
-  }
-
-  // 检查是否已经在观察列表中
-  const existingWatchlist = await getOne(
-    'SELECT watchlist_id FROM watchlist WHERE user_id = $1 AND stock_id = $2',
-    [userId, stock_id]
-  );
-  if (existingWatchlist) {
-    return res.status(400).json({ error: 'Stock already in watchlist' });
-  }
-
-  // 添加到观察列表
-  const newWatchlistItem = await getOne(
-    `INSERT INTO watchlist (user_id, stock_id, display_name, added_at) 
-     VALUES ($1, $2, $3, NOW()) 
-     RETURNING watchlist_id, user_id, stock_id, display_name, added_at`,
-    [userId, stock_id, display_name]
-  );
-
-  return res.status(201).json(newWatchlistItem);
+  res.setHeader('Allow', ['GET', 'POST']);
+  res.status(405).end(`Method ${req.method} Not Allowed`);
 } 

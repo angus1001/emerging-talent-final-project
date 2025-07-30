@@ -1,29 +1,21 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getMany } from '../../../../lib/db';
-import { errorHandler  } from '../../../../middleware/middleware';
+import { PrismaClient } from '@prisma/client';
 
+const prisma = new PrismaClient();
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-
-
-  try {
-    switch (req.method) {
-      case 'GET':
-        return await getStocks(req, res);
-      default:
-        return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method === 'GET') {
+    // 获取所有股票
+    try {
+      const stocks = await prisma.stock.findMany({
+        orderBy: { symbol: 'asc' },
+      });
+      
+      return res.status(200).json(stocks);
+    } catch (error) {
+      return res.status(500).json({ error: 'Internal server error' });
     }
-  } catch (error) {
-    return errorHandler(error, req, res);
   }
-}
 
-// 获取所有股票
-async function getStocks(req: NextApiRequest, res: NextApiResponse) {
-  const stocks = await getMany(
-    `SELECT stock_id, symbol, company_name, current_price, last_updated 
-     FROM stocks 
-     ORDER BY symbol ASC`
-  );
-  
-  return res.status(200).json(stocks);
+  res.setHeader('Allow', ['GET']);
+  res.status(405).end(`Method ${req.method} Not Allowed`);
 } 

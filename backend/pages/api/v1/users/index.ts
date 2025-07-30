@@ -1,55 +1,29 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getMany, getOne, query } from '../../../../lib/db';
-import { errorHandler, validateRequest, middleware } from '../../../../middleware/middleware';
-import { User } from '../../../../type';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-
-  try {
-    switch (req.method) {
-      case 'GET':
-        return await getUsers(req, res);
-      case 'POST':
-        return await createUser(req, res);
-      default:
-        return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method === 'GET') {
+    // 获取所有用户
+    const users = await prisma.user.findMany();
+    return res.status(200).json(users);
+  }
+  if (req.method === 'POST') {
+    // 创建新用户
+    const { first_name, last_name, password, email, phone, language, location } = req.body;
+    if (!first_name || !last_name || !password || !email) {
+      return res.status(400).json({ error: 'Missing required fields' });
     }
-  } catch (error) {
-    return errorHandler(error, req, res);
+    try {
+      const user = await prisma.user.create({
+        data: { first_name, last_name, password, email, phone, language, location },
+      });
+      return res.status(201).json(user);
+    } catch (e) {
+      return res.status(400).json({ error: 'Email already exists or invalid input' });
+    }
   }
-}
-
-// 获取所有用户
-async function getUsers(req: NextApiRequest, res: NextApiResponse) {
-  console.log('getUsers');
-  const users = await getMany(
-    'SELECT user_id, first_name, last_name, email, created_at FROM users ORDER BY created_at DESC'
-  );
-  
-  return res.status(200).json(users);
-}
-
-// 创建新用户
-async function createUser(req: NextApiRequest, res: NextApiResponse) {
-  const requiredFields = ['first_name', 'last_name', 'password', 'email'];
-  const validationError = validateRequest(req, res, requiredFields);
-  if (validationError) return validationError;
-
-  const { first_name, last_name, password, email } = req.body;
-
-  // 检查邮箱是否已存在
-  const existingUser = await getOne('SELECT user_id FROM users WHERE email = $1', [email]);
-  if (existingUser) {
-    return res.status(400).json({ error: 'Email already exists' });
-  }
-
-  // 创建新用户
-  const newUser = await getOne(
-    `INSERT INTO users (first_name, last_name, password, email, created_at) 
-     VALUES ($1, $2, $3, $4, NOW()) 
-     RETURNING user_id, first_name, last_name, email, created_at`,
-    [first_name, last_name, password, email]
-  );
-
-  return res.status(201).json(newUser);
+  res.setHeader('Allow', ['GET', 'POST']);
+  res.status(405).end(`Method ${req.method} Not Allowed`);
 } 
