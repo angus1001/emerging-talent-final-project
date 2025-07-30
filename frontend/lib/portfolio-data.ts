@@ -14,17 +14,18 @@ export interface PortfolioAsset {
   id: string;
   name: string;
   type: 'stock' | 'cash';
-  symbol?: string;
+  symbol: string;
   shares?: number;
-  quantity?: number; // alias for shares for AssetManagement component
-  currentPrice?: number;
+  quantity: number; // Required for components
+  currentPrice: number; // Required for components
   averagePrice?: number;
+  purchasePrice: number; // Required for PortfolioInsights component
   value: number;
-  totalValue?: number; // alias for value for AssetManagement component
+  totalValue: number; // Required for components
   change?: number;
-  gain?: number; // alias for change for AssetManagement component
+  gain: number; // Required for components
   changePercent?: number;
-  gainPercent?: number; // alias for changePercent for AssetManagement component
+  gainPercent: number; // Required for components
   sector?: string;
 }
 
@@ -52,11 +53,14 @@ export function convertApiPortfolioToSummary(apiPortfolio: ApiPortfolioSummary):
       id: 'cash',
       name: 'Cash',
       type: 'cash',
+      symbol: 'CASH', // Provide a symbol for cash
       value: apiPortfolio.cash_balance,
       totalValue: apiPortfolio.cash_balance,
       quantity: 1,
       shares: 1,
       currentPrice: apiPortfolio.cash_balance,
+      averagePrice: apiPortfolio.cash_balance,
+      purchasePrice: apiPortfolio.cash_balance, // alias for PortfolioInsights component
       change: 0,
       gain: 0,
       changePercent: 0,
@@ -81,6 +85,7 @@ export function convertApiPortfolioToSummary(apiPortfolio: ApiPortfolioSummary):
       quantity: holding.holding_number, // alias for AssetManagement component
       currentPrice: stock.current_price,
       averagePrice: holding.average_price,
+      purchasePrice: holding.average_price, // alias for PortfolioInsights component
       value: currentValue,
       totalValue: currentValue, // alias for AssetManagement component
       change: change,

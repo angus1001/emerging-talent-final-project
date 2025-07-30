@@ -107,7 +107,7 @@ export default function AccountPage() {
   // Portfolio data hooks
   const { portfolio, loading: portfolioLoading, error: portfolioError } = usePortfolioSummary(userId)
   const { holdings, loading: holdingsLoading, error: holdingsError } = useUserHoldings(userId)
-  const { watchlist, loading: watchlistLoading, error: watchlistError } = useUserWatchlist(userId)
+  const { watchlist, loading: watchlistLoading, error: watchlistError, addToWatchlist, removeFromWatchlist } = useUserWatchlist(userId)
   
   const [selectedStock, setSelectedStock] = useState<any>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -157,8 +157,36 @@ export default function AccountPage() {
     setSelectedStock(null)
   }
 
+  // Handle watchlist toggle
+  const handleWatchlistToggle = async (stock: any) => {
+    const isInWatchlist = watchlist?.some(item => item.stock.symbol === stock.symbol)
+    
+    if (isInWatchlist) {
+      // Remove from watchlist
+      const watchlistItem = watchlist?.find(item => item.stock.symbol === stock.symbol)
+      if (watchlistItem) {
+        const success = await removeFromWatchlist(watchlistItem.watchlist_id)
+        if (success) {
+          console.log(`Removed ${stock.symbol} from watchlist`)
+        }
+      }
+    } else {
+      // Add to watchlist
+      const watchlistData = {
+        stock_id: stock.id || 1, // You may need to map this properly based on your stock data
+        stock: stock,
+        display_name: stock.name,
+        created_at: new Date().toISOString()
+      }
+      const result = await addToWatchlist(watchlistData)
+      if (result) {
+        console.log(`Added ${stock.symbol} to watchlist`)
+      }
+    }
+  }
+
   // Loading state
-  if (userLoading || portfolioLoading || holdingsLoading) {
+  if (userLoading || portfolioLoading || holdingsLoading || watchlistLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="flex items-center space-x-2">
@@ -170,13 +198,13 @@ export default function AccountPage() {
   }
 
   // Error state
-  if (userError || portfolioError || holdingsError) {
+  if (userError || portfolioError || holdingsError || watchlistError) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-lg font-semibold text-red-600 mb-2">Error Loading Account</h2>
           <p className="text-gray-600">
-            {userError || portfolioError || holdingsError}
+            {userError || portfolioError || holdingsError || watchlistError}
           </p>
         </div>
       </div>
@@ -401,40 +429,56 @@ export default function AccountPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {watchlistStockData.map((stock) => (
-                        <div key={stock.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
-                          <div className="flex items-center space-x-4">
-                            <Heart className="w-5 h-5 text-red-500 fill-red-500" />
-                            <div>
-                              <button
-                                onClick={() => openStockModal(stock)}
-                                className="font-bold text-lg text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
-                              >
-                                {stock.symbol}
-                              </button>
-                              <p className="text-sm text-gray-600">{stock.name}</p>
-                              <Badge variant="secondary" className="text-xs">
-                                {stock.sector}
-                              </Badge>
+                      {watchlistStockData.length > 0 ? (
+                        watchlistStockData.map((stock) => {
+                          const watchlistItem = watchlist?.find(item => item.stock.symbol === stock.symbol)
+                          return (
+                            <div key={stock.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                              <div className="flex items-center space-x-4">
+                                <button
+                                  onClick={() => handleWatchlistToggle(stock)}
+                                  className="text-red-500 hover:text-red-700 transition-colors"
+                                >
+                                  <Heart className="w-5 h-5 fill-red-500" />
+                                </button>
+                                <div>
+                                  <button
+                                    onClick={() => openStockModal(stock)}
+                                    className="font-bold text-lg text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+                                  >
+                                    {stock.symbol}
+                                  </button>
+                                  <p className="text-sm text-gray-600">{stock.name}</p>
+                                  <Badge variant="secondary" className="text-xs">
+                                    {stock.sector}
+                                  </Badge>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <p className="font-semibold text-lg">${stock.price}</p>
+                                <div className={`flex items-center text-sm ${
+                                  stock.change >= 0 ? "text-green-600" : "text-red-600"
+                                }`}>
+                                  {stock.change >= 0 ? (
+                                    <TrendingUp className="w-4 h-4 mr-1" />
+                                  ) : (
+                                    <TrendingDown className="w-4 h-4 mr-1" />
+                                  )}
+                                  {stock.change >= 0 ? "+" : ""}
+                                  {stock.change} ({stock.changePercent >= 0 ? "+" : ""}{stock.changePercent}%)
+                                </div>
+                                <p className="text-xs text-gray-500">{stock.volume} vol</p>
+                              </div>
                             </div>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-semibold text-lg">${stock.price}</p>
-                            <div className={`flex items-center text-sm ${
-                              stock.change >= 0 ? "text-green-600" : "text-red-600"
-                            }`}>
-                              {stock.change >= 0 ? (
-                                <TrendingUp className="w-4 h-4 mr-1" />
-                              ) : (
-                                <TrendingDown className="w-4 h-4 mr-1" />
-                              )}
-                              {stock.change >= 0 ? "+" : ""}
-                              {stock.change} ({stock.changePercent >= 0 ? "+" : ""}{stock.changePercent}%)
-                            </div>
-                            <p className="text-xs text-gray-500">{stock.volume} vol</p>
-                          </div>
+                          )
+                        })
+                      ) : (
+                        <div className="text-center py-8">
+                          <Heart className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                          <p className="text-gray-500">Your watchlist is empty</p>
+                          <p className="text-sm text-gray-400 mt-2">Go to Markets to add stocks to your watchlist</p>
                         </div>
-                      ))}
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -451,6 +495,8 @@ export default function AccountPage() {
         onClose={closeStockModal}
         onBuy={handleBuy}
         onSell={handleSell}
+        onWatchlistToggle={handleWatchlistToggle}
+        isInWatchlist={selectedStock ? watchlist?.some(item => item.stock.symbol === selectedStock.symbol) || false : false}
       />
     </div>
   )
