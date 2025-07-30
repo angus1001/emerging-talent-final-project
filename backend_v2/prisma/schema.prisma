@@ -17,6 +17,7 @@ model User {
   created_at  DateTime @default(now())
   language    String?
   location    String?
+  cash        Float?
   orders      Order[]
   holdings    Holding[]
   watchlists  Watchlist[]
@@ -38,6 +39,15 @@ model Stock {
   orders        Order[]
   holdings      Holding[]
   watchlists    Watchlist[]
+  stockPriceHistorys StockPriceHistory[]
+}
+
+model StockPriceHistory {
+  stock_price_history_id Int      @id @default(autoincrement())
+  stock                 Stock    @relation(fields: [stock_id], references: [stock_id])
+  stock_id              Int
+  date                  DateTime
+  close_price           Float
 }
 
 model Order {

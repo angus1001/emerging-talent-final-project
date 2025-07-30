@@ -1,0 +1,328 @@
+/*
+ Navicat Premium Data Transfer
+
+ Source Server         : ali_ecs_mysql
+ Source Server Type    : MySQL
+ Source Server Version : 50736
+ Source Host           : 8.153.67.100:3306
+ Source Schema         : portfolio
+
+ Target Server Type    : MySQL
+ Target Server Version : 50736
+ File Encoding         : 65001
+
+ Date: 30/07/2025 14:58:23
+*/
+
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- ----------------------------
+-- Table structure for Holding
+-- ----------------------------
+DROP TABLE IF EXISTS `Holding`;
+CREATE TABLE `Holding`  (
+  `holding_id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL,
+  `stock_id` int(11) NOT NULL,
+  `holding_number` int(11) NOT NULL,
+  `average_price` double NOT NULL,
+  `cash` int(11) NOT NULL,
+  `total_value` int(11) NOT NULL,
+  `last_updated` datetime(3) NULL DEFAULT NULL,
+  PRIMARY KEY (`holding_id`) USING BTREE,
+  INDEX `Holding_user_id_fkey`(`user_id`) USING BTREE,
+  INDEX `Holding_stock_id_fkey`(`stock_id`) USING BTREE,
+  CONSTRAINT `Holding_stock_id_fkey` FOREIGN KEY (`stock_id`) REFERENCES `Stock` (`stock_id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `Holding_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `User` (`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE = InnoDB AUTO_INCREMENT = 17 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of Holding
+-- ----------------------------
+INSERT INTO `Holding` VALUES (9, 0, 0, 10, 180.5, 5000, 1805, '2024-06-10 09:00:00.000');
+INSERT INTO `Holding` VALUES (10, 0, 1, 5, 2700, 3000, 13500, '2024-06-11 09:00:00.000');
+INSERT INTO `Holding` VALUES (11, 1, 2, 8, 700, 4000, 5600, '2024-06-12 09:00:00.000');
+INSERT INTO `Holding` VALUES (12, 1, 3, 12, 40, 2000, 480, '2024-06-13 09:00:00.000');
+INSERT INTO `Holding` VALUES (13, 2, 1, 15, 2700, 6000, 40500, '2024-06-14 09:00:00.000');
+INSERT INTO `Holding` VALUES (14, 2, 0, 7, 180.5, 3500, 1264, '2024-06-15 09:00:00.000');
+INSERT INTO `Holding` VALUES (15, 3, 3, 20, 40, 8000, 800, '2024-06-16 09:00:00.000');
+INSERT INTO `Holding` VALUES (16, 3, 2, 9, 700, 9000, 6300, '2024-06-17 09:00:00.000');
+
+-- ----------------------------
+-- Table structure for NetWorth
+-- ----------------------------
+DROP TABLE IF EXISTS `NetWorth`;
+CREATE TABLE `NetWorth`  (
+  `net_worth_id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL,
+  `total_balance` double NOT NULL,
+  `stock_value` double NOT NULL,
+  `date_recorded` datetime(3) NOT NULL,
+  PRIMARY KEY (`net_worth_id`) USING BTREE,
+  INDEX `NetWorth_user_id_fkey`(`user_id`) USING BTREE,
+  CONSTRAINT `NetWorth_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `User` (`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE = InnoDB AUTO_INCREMENT = 145 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of NetWorth
+-- ----------------------------
+INSERT INTO `NetWorth` VALUES (1, 0, 10000, 7000, '2024-05-19 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (2, 0, 10050, 7050, '2024-05-20 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (3, 0, 10100, 7100, '2024-05-21 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (4, 0, 10150, 7150, '2024-05-22 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (5, 0, 10200, 7200, '2024-05-23 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (6, 0, 10250, 7250, '2024-05-24 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (7, 0, 10300, 7300, '2024-05-25 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (8, 0, 10350, 7350, '2024-05-26 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (9, 0, 10400, 7400, '2024-05-27 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (10, 0, 10450, 7450, '2024-05-28 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (11, 0, 10500, 7500, '2024-05-29 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (12, 0, 10550, 7550, '2024-05-30 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (13, 0, 10600, 7600, '2024-05-31 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (14, 0, 10650, 7650, '2024-06-01 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (15, 0, 10700, 7700, '2024-06-02 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (16, 0, 10750, 7750, '2024-06-03 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (17, 0, 10800, 7800, '2024-06-04 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (18, 0, 10850, 7850, '2024-06-05 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (19, 0, 10900, 7900, '2024-06-06 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (20, 0, 10950, 7950, '2024-06-07 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (21, 0, 11000, 8000, '2024-06-08 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (22, 0, 11050, 8050, '2024-06-09 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (23, 0, 11100, 8100, '2024-06-10 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (24, 0, 11150, 8150, '2024-06-11 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (25, 0, 11200, 8200, '2024-06-12 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (26, 0, 11250, 8250, '2024-06-13 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (27, 0, 11300, 8300, '2024-06-14 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (28, 0, 11350, 8350, '2024-06-15 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (29, 0, 11400, 8400, '2024-06-16 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (30, 0, 11450, 8450, '2024-06-17 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (31, 1, 20000, 12000, '2024-05-19 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (32, 1, 20050, 12050, '2024-05-20 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (33, 1, 20100, 12100, '2024-05-21 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (34, 1, 20150, 12150, '2024-05-22 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (35, 1, 20200, 12200, '2024-05-23 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (36, 1, 20250, 12250, '2024-05-24 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (37, 1, 20300, 12300, '2024-05-25 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (38, 1, 20350, 12350, '2024-05-26 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (39, 1, 20400, 12400, '2024-05-27 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (40, 1, 20450, 12450, '2024-05-28 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (41, 1, 20500, 12500, '2024-05-29 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (42, 1, 20550, 12550, '2024-05-30 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (43, 1, 20600, 12600, '2024-05-31 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (44, 1, 20650, 12650, '2024-06-01 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (45, 1, 20700, 12700, '2024-06-02 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (46, 1, 20750, 12750, '2024-06-03 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (47, 1, 20800, 12800, '2024-06-04 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (48, 1, 20850, 12850, '2024-06-05 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (49, 1, 20900, 12900, '2024-06-06 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (50, 1, 20950, 12950, '2024-06-07 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (51, 1, 21000, 13000, '2024-06-08 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (52, 1, 21050, 13050, '2024-06-09 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (53, 1, 21100, 13100, '2024-06-10 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (54, 1, 21150, 13150, '2024-06-11 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (55, 1, 21200, 13200, '2024-06-12 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (56, 1, 21250, 13250, '2024-06-13 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (57, 1, 21300, 13300, '2024-06-14 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (58, 1, 21350, 13350, '2024-06-15 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (59, 1, 21400, 13400, '2024-06-16 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (60, 1, 21450, 13450, '2024-06-17 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (61, 2, 30000, 21000, '2024-05-19 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (62, 2, 30050, 21050, '2024-05-20 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (63, 2, 30100, 21100, '2024-05-21 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (64, 2, 30150, 21150, '2024-05-22 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (65, 2, 30200, 21200, '2024-05-23 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (66, 2, 30250, 21250, '2024-05-24 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (67, 2, 30300, 21300, '2024-05-25 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (68, 2, 30350, 21350, '2024-05-26 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (69, 2, 30400, 21400, '2024-05-27 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (70, 2, 30450, 21450, '2024-05-28 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (71, 2, 30500, 21500, '2024-05-29 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (72, 2, 30550, 21550, '2024-05-30 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (73, 2, 30600, 21600, '2024-05-31 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (74, 2, 30650, 21650, '2024-06-01 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (75, 2, 30700, 21700, '2024-06-02 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (76, 2, 30750, 21750, '2024-06-03 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (77, 2, 30800, 21800, '2024-06-04 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (78, 2, 30850, 21850, '2024-06-05 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (79, 2, 30900, 21900, '2024-06-06 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (80, 2, 30950, 21950, '2024-06-07 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (81, 2, 31000, 22000, '2024-06-08 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (82, 2, 31050, 22050, '2024-06-09 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (83, 2, 31100, 22100, '2024-06-10 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (84, 2, 31150, 22150, '2024-06-11 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (85, 2, 31200, 22200, '2024-06-12 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (86, 2, 31250, 22250, '2024-06-13 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (87, 2, 31300, 22300, '2024-06-14 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (88, 2, 31350, 22350, '2024-06-15 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (89, 2, 31400, 22400, '2024-06-16 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (90, 2, 31450, 22450, '2024-06-17 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (91, 3, 40000, 31000, '2024-05-19 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (92, 3, 40050, 31050, '2024-05-20 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (93, 3, 40100, 31100, '2024-05-21 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (94, 3, 40150, 31150, '2024-05-22 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (95, 3, 40200, 31200, '2024-05-23 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (96, 3, 40250, 31250, '2024-05-24 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (97, 3, 40300, 31300, '2024-05-25 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (98, 3, 40350, 31350, '2024-05-26 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (99, 3, 40400, 31400, '2024-05-27 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (100, 3, 40450, 31450, '2024-05-28 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (101, 3, 40500, 31500, '2024-05-29 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (102, 3, 40550, 31550, '2024-05-30 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (103, 3, 40600, 31600, '2024-05-31 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (104, 3, 40650, 31650, '2024-06-01 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (105, 3, 40700, 31700, '2024-06-02 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (106, 3, 40750, 31750, '2024-06-03 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (107, 3, 40800, 31800, '2024-06-04 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (108, 3, 40850, 31850, '2024-06-05 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (109, 3, 40900, 31900, '2024-06-06 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (110, 3, 40950, 31950, '2024-06-07 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (111, 3, 41000, 32000, '2024-06-08 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (112, 3, 41050, 32050, '2024-06-09 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (113, 3, 41100, 32100, '2024-06-10 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (114, 3, 41150, 32150, '2024-06-11 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (115, 3, 41200, 32200, '2024-06-12 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (116, 3, 41250, 32250, '2024-06-13 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (117, 3, 41300, 32300, '2024-06-14 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (118, 3, 41350, 32350, '2024-06-15 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (119, 3, 41400, 32400, '2024-06-16 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (120, 3, 41450, 32450, '2024-06-17 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (121, 0, 9000, 6000, '2024-01-01 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (122, 0, 9500, 6500, '2024-02-01 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (123, 0, 10000, 7000, '2024-03-01 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (124, 0, 10500, 7500, '2024-04-01 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (125, 0, 11000, 8000, '2024-05-01 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (126, 0, 11500, 8500, '2024-06-01 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (127, 1, 19000, 11000, '2024-01-01 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (128, 1, 19500, 11500, '2024-02-01 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (129, 1, 20000, 12000, '2024-03-01 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (130, 1, 20500, 12500, '2024-04-01 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (131, 1, 21000, 13000, '2024-05-01 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (132, 1, 21500, 13500, '2024-06-01 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (133, 2, 29000, 20000, '2024-01-01 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (134, 2, 29500, 20500, '2024-02-01 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (135, 2, 30000, 21000, '2024-03-01 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (136, 2, 30500, 21500, '2024-04-01 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (137, 2, 31000, 22000, '2024-05-01 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (138, 2, 31500, 22500, '2024-06-01 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (139, 3, 39000, 30000, '2024-01-01 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (140, 3, 39500, 30500, '2024-02-01 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (141, 3, 40000, 31000, '2024-03-01 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (142, 3, 40500, 31500, '2024-04-01 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (143, 3, 41000, 32000, '2024-05-01 00:00:00.000');
+INSERT INTO `NetWorth` VALUES (144, 3, 41500, 32500, '2024-06-01 00:00:00.000');
+
+-- ----------------------------
+-- Table structure for Order
+-- ----------------------------
+DROP TABLE IF EXISTS `Order`;
+CREATE TABLE `Order`  (
+  `order_id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL,
+  `stock_id` int(11) NOT NULL,
+  `order_type` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `quantity` int(11) NOT NULL,
+  `price_per_share` double NOT NULL,
+  `total_value` int(11) NOT NULL,
+  `date` datetime(3) NOT NULL,
+  `status` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `duration` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
+  PRIMARY KEY (`order_id`) USING BTREE,
+  INDEX `Order_user_id_fkey`(`user_id`) USING BTREE,
+  INDEX `Order_stock_id_fkey`(`stock_id`) USING BTREE,
+  CONSTRAINT `Order_stock_id_fkey` FOREIGN KEY (`stock_id`) REFERENCES `Stock` (`stock_id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `Order_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `User` (`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE = InnoDB AUTO_INCREMENT = 33 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of Order
+-- ----------------------------
+INSERT INTO `Order` VALUES (1, 0, 1, 'SELL', 5, 2700, 13500, '2024-06-02 11:00:00.000', 'PENDING', 'DAY');
+INSERT INTO `Order` VALUES (2, 1, 2, 'BUY', 8, 700, 5600, '2024-06-03 12:00:00.000', 'EXECUTED', 'GTC');
+INSERT INTO `Order` VALUES (3, 1, 3, 'SELL', 12, 40, 480, '2024-06-04 13:00:00.000', 'CANCELLED', 'DAY');
+INSERT INTO `Order` VALUES (4, 2, 1, 'BUY', 15, 2700, 40500, '2024-06-05 14:00:00.000', 'EXECUTED', 'GTC');
+INSERT INTO `Order` VALUES (5, 2, 0, 'SELL', 7, 180.5, 1264, '2024-06-06 15:00:00.000', 'PENDING', 'DAY');
+INSERT INTO `Order` VALUES (6, 3, 3, 'BUY', 20, 40, 800, '2024-06-07 16:00:00.000', 'EXECUTED', 'GTC');
+INSERT INTO `Order` VALUES (7, 3, 2, 'SELL', 9, 700, 6300, '2024-06-08 17:00:00.000', 'PENDING', 'DAY');
+INSERT INTO `Order` VALUES (8, 0, 0, 'BUY', 10, 180.5, 1805, '2024-06-01 10:00:00.000', 'EXECUTED', 'GTC');
+
+-- ----------------------------
+-- Table structure for Stock
+-- ----------------------------
+DROP TABLE IF EXISTS `Stock`;
+CREATE TABLE `Stock`  (
+  `stock_id` int(11) NOT NULL AUTO_INCREMENT,
+  `symbol` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `company_name` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `current_price` double NOT NULL,
+  `last_updated` datetime(3) NULL DEFAULT NULL,
+  `exchange` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
+  `volume` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
+  `sector` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
+  `market_cap` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
+  `company_info` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
+  `in_list` tinyint(1) NULL DEFAULT NULL,
+  PRIMARY KEY (`stock_id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 9 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of Stock
+-- ----------------------------
+INSERT INTO `Stock` VALUES (0, 'AAPL', 'Apple Inc.', 180.5, '2024-06-17 09:00:00.000', 'NASDAQ', '1000000', 'Technology', '2T', 'Apple company info', 1);
+INSERT INTO `Stock` VALUES (1, 'GOOG', 'Alphabet Inc.', 2700, '2024-06-17 09:00:00.000', 'NASDAQ', '800000', 'Technology', '1.5T', 'Google company info', 1);
+INSERT INTO `Stock` VALUES (2, 'TSLA', 'Tesla Inc.', 700, '2024-06-17 09:00:00.000', 'NASDAQ', '500000', 'Automotive', '800B', 'Tesla company info', 1);
+INSERT INTO `Stock` VALUES (3, 'HSBC', 'HSBC Holdings', 40, '2024-06-17 09:00:00.000', 'LSE', '300000', 'Finance', '150B', 'HSBC company info', 1);
+
+-- ----------------------------
+-- Table structure for User
+-- ----------------------------
+DROP TABLE IF EXISTS `User`;
+CREATE TABLE `User`  (
+  `user_id` int(11) NOT NULL AUTO_INCREMENT,
+  `first_name` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `last_name` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `password` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `email` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `phone` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
+  `created_at` datetime(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  `language` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
+  `location` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
+  PRIMARY KEY (`user_id`) USING BTREE,
+  UNIQUE INDEX `User_email_key`(`email`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 11 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of User
+-- ----------------------------
+INSERT INTO `User` VALUES (0, 'Bob', 'Johnson', 'password1', 'bob1@example.com', '1234567891', '2024-01-02 09:00:00.000', 'en', 'London');
+INSERT INTO `User` VALUES (1, 'Carol', 'Williams', 'password2', 'carol2@example.com', '1234567892', '2024-01-03 09:00:00.000', 'zh', 'Shanghai');
+INSERT INTO `User` VALUES (2, 'David', 'Brown', 'password3', 'david3@example.com', '1234567893', '2024-01-04 09:00:00.000', 'fr', 'Paris');
+INSERT INTO `User` VALUES (3, 'Alice', 'Smith', 'password0', 'alice0@example.com', '1234567890', '2024-01-01 09:00:00.000', 'en', 'New York');
+INSERT INTO `User` VALUES (9, '1Alayna', 'Lubowitz', 'P1Dk2rVlyJewXMq', 'Caleigh_Mraz@yahoo.com', '(937) 989-7953', '2025-07-29 15:38:02.439', 'esse dolor commodo occaecat nostrud', 'est Excepteur voluptate esse sunt');
+
+-- ----------------------------
+-- Table structure for Watchlist
+-- ----------------------------
+DROP TABLE IF EXISTS `Watchlist`;
+CREATE TABLE `Watchlist`  (
+  `watchlist_id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL,
+  `stock_id` int(11) NOT NULL,
+  `display_name` varchar(191) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL,
+  `created_at` datetime(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+  PRIMARY KEY (`watchlist_id`) USING BTREE,
+  INDEX `Watchlist_user_id_fkey`(`user_id`) USING BTREE,
+  INDEX `Watchlist_stock_id_fkey`(`stock_id`) USING BTREE,
+  CONSTRAINT `Watchlist_stock_id_fkey` FOREIGN KEY (`stock_id`) REFERENCES `Stock` (`stock_id`) ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `Watchlist_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `User` (`user_id`) ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE = InnoDB AUTO_INCREMENT = 9 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of Watchlist
+-- ----------------------------
+INSERT INTO `Watchlist` VALUES (5, 0, 0, 'Apple Inc.', '2024-06-01 09:00:00.000');
+INSERT INTO `Watchlist` VALUES (6, 1, 1, 'Alphabet Inc.', '2024-06-02 09:00:00.000');
+INSERT INTO `Watchlist` VALUES (7, 2, 2, 'Tesla Inc.', '2024-06-03 09:00:00.000');
+INSERT INTO `Watchlist` VALUES (8, 3, 3, 'HSBC Holdings', '2024-06-04 09:00:00.000');
+
+SET FOREIGN_KEY_CHECKS = 1;

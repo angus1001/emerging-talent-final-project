@@ -44,8 +44,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         case '6m':
           startDate.setMonth(now.getMonth() - 6);
           break;
-        case '1y':
-          startDate.setFullYear(now.getFullYear() - 1);
+        case '10y':
+          startDate.setFullYear(now.getFullYear() - 10);
           break;
         default:
           startDate.setMonth(now.getMonth() - 1);
