@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -10,140 +10,7 @@ import { TrendingUp, TrendingDown, Activity, Volume2, Heart, HeartOff, Search, F
 import Navigation from "@/components/navigation"
 import StockDetailModal from "@/components/stock-detail-modal"
 import { useUserData } from "@/hooks/use-user-data"
-
-// Mock market data - more realistic based on actual market data
-const marketData = [
-  {
-    id: "1",
-    symbol: "AAPL",
-    name: "Apple Inc.",
-    price: 213.88,
-    change: 0.12,
-    changePercent: 0.056,
-    volume: "40.3M",
-    marketCap: "3.19T",
-    sector: "Technology",
-    description: "Technology company that designs, develops, and sells consumer electronics, computer software, and online services.",
-    exchange: "NASDAQ"
-  },
-  {
-    id: "2",
-    symbol: "GOOGL",
-    name: "Alphabet Inc.",
-    price: 142.50,
-    change: -1.25,
-    changePercent: -0.87,
-    volume: "28.1M",
-    marketCap: "1.78T",
-    sector: "Technology",
-    description: "Multinational technology company specializing in Internet-related services and products.",
-    exchange: "NASDAQ"
-  },
-  {
-    id: "3",
-    symbol: "MSFT",
-    name: "Microsoft Corporation",
-    price: 412.80,
-    change: 5.60,
-    changePercent: 1.38,
-    volume: "22.3M",
-    marketCap: "3.06T",
-    sector: "Technology",
-    description: "Technology corporation that develops computer software, consumer electronics, and related services.",
-    exchange: "NASDAQ"
-  },
-  {
-    id: "4",
-    symbol: "TSLA",
-    name: "Tesla Inc.",
-    price: 245.80,
-    change: -8.20,
-    changePercent: -3.23,
-    volume: "82.5M",
-    marketCap: "783.2B",
-    sector: "Automotive",
-    description: "Electric vehicle and clean energy company that designs and manufactures electric cars and energy storage systems.",
-    exchange: "NASDAQ"
-  },
-  {
-    id: "5",
-    symbol: "AMZN",
-    name: "Amazon.com Inc.",
-    price: 186.40,
-    change: 3.15,
-    changePercent: 1.72,
-    volume: "35.7M",
-    marketCap: "1.94T",
-    sector: "Consumer Discretionary",
-    description: "E-commerce and cloud computing company offering online retail, web services, and digital streaming.",
-    exchange: "NASDAQ"
-  },
-  {
-    id: "6",
-    symbol: "NVDA",
-    name: "NVIDIA Corporation",
-    price: 118.75,
-    change: 4.25,
-    changePercent: 3.71,
-    volume: "68.9M",
-    marketCap: "2.91T",
-    sector: "Technology",
-    description: "Technology company that designs graphics processing units (GPUs) for gaming, cryptocurrency, and artificial intelligence.",
-    exchange: "NASDAQ"
-  },
-  {
-    id: "7",
-    symbol: "META",
-    name: "Meta Platforms Inc.",
-    price: 528.90,
-    change: -2.10,
-    changePercent: -0.40,
-    volume: "15.8M",
-    marketCap: "1.34T",
-    sector: "Technology",
-    description: "Social media and virtual reality company operating Facebook, Instagram, WhatsApp, and developing metaverse technologies.",
-    exchange: "NASDAQ"
-  },
-  {
-    id: "8",
-    symbol: "JPM",
-    name: "JPMorgan Chase & Co.",
-    price: 245.67,
-    change: 1.89,
-    changePercent: 0.78,
-    volume: "8.4M",
-    marketCap: "716.8B",
-    sector: "Financial Services",
-    description: "Multinational investment bank and financial services company providing banking, investment, and asset management services.",
-    exchange: "NYSE"
-  },
-  {
-    id: "9",
-    symbol: "JNJ",
-    name: "Johnson & Johnson",
-    price: 156.23,
-    change: -0.45,
-    changePercent: -0.29,
-    volume: "6.7M",
-    marketCap: "421.3B",
-    sector: "Healthcare",
-    description: "Pharmaceutical, medical device and consumer goods company developing healthcare products and services.",
-    exchange: "NYSE"
-  },
-  {
-    id: "10",
-    symbol: "V",
-    name: "Visa Inc.",
-    price: 308.45,
-    change: 2.78,
-    changePercent: 0.91,
-    volume: "4.2M",
-    marketCap: "642.1B",
-    sector: "Financial Services",
-    description: "Financial services corporation that facilitates electronic funds transfers worldwide through Visa-branded payment products.",
-    exchange: "NYSE"
-  },
-]
+import { useStocks } from "@/hooks/use-stock-data"
 
 const getSectorBadgeColor = (sector: string) => {
   switch (sector) {
@@ -164,6 +31,7 @@ const getSectorBadgeColor = (sector: string) => {
 
 export default function MarketsPage() {
   const { user, loading: userLoading } = useUserData()
+  const { marketStocks, loading: stocksLoading, error: stocksError } = useStocks()
   const [watchlistStocks, setWatchlistStocks] = useState<string[]>(["AAPL", "NVDA", "MSFT"])
   const [selectedStock, setSelectedStock] = useState<any>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -188,10 +56,10 @@ export default function MarketsPage() {
 
   const isInWatchlist = (symbol: string) => watchlistStocks.includes(symbol)
 
-  const watchlistStockData = marketData.filter(stock => watchlistStocks.includes(stock.symbol))
+  const watchlistStockData = marketStocks.filter(stock => watchlistStocks.includes(stock.symbol))
 
   // Filter and search logic
-  const filteredMarketData = marketData.filter((stock) => {
+  const filteredMarketData = marketStocks.filter((stock) => {
     const matchesSearch = 
       stock.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
       stock.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -202,7 +70,7 @@ export default function MarketsPage() {
   })
 
   // Get unique sectors for filter dropdown
-  const uniqueSectors = Array.from(new Set(marketData.map(stock => stock.sector)))
+  const uniqueSectors = Array.from(new Set(marketStocks.map(stock => stock.sector)))
 
   const openStockModal = (stock: any) => {
     setSelectedStock(stock)
@@ -224,6 +92,66 @@ export default function MarketsPage() {
     console.log(`Sell order for ${orderData.symbol}:`, orderData.orderDetails)
     // Here you would implement the sell logic with the detailed order information  
     // orderData.orderDetails contains: action, quantity, price, orderType, duration, totalValue
+  }
+
+  // Show loading state
+  if (stocksLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navigation 
+          user={user}
+          loading={userLoading}
+          onHomeClick={handleHomeClick}
+          onAccountClick={() => window.location.href = "/account"}
+          onProfileClick={handleProfileClick}
+        />
+        <div className="container mx-auto p-6">
+          <div className="space-y-2 mb-6">
+            <h1 className="text-3xl font-bold text-gray-900">Markets</h1>
+            <p className="text-lg text-gray-600">Loading market data...</p>
+          </div>
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <span className="ml-2 text-gray-600">Loading stocks...</span>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Show error state
+  if (stocksError) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navigation 
+          user={user}
+          loading={userLoading}
+          onHomeClick={handleHomeClick}
+          onAccountClick={() => window.location.href = "/account"}
+          onProfileClick={handleProfileClick}
+        />
+        <div className="container mx-auto p-6">
+          <div className="space-y-2 mb-6">
+            <h1 className="text-3xl font-bold text-gray-900">Markets</h1>
+            <p className="text-lg text-gray-600">Error loading market data</p>
+          </div>
+          <Card>
+            <CardContent className="p-6">
+              <div className="text-center text-red-600">
+                <p className="mb-2">Failed to load stock data</p>
+                <p className="text-sm text-gray-600">{stocksError}</p>
+                <Button 
+                  onClick={() => window.location.reload()} 
+                  className="mt-4"
+                >
+                  Retry
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
   }
 
   return (

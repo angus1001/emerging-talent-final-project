@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -11,6 +11,7 @@ import Navigation from "@/components/navigation"
 import PortfolioInsights from "@/components/portfolio-insights"
 import StockDetailModal from "@/components/stock-detail-modal"
 import { useUserData } from "@/hooks/use-user-data"
+import { useStocks } from "@/hooks/use-stock-data"
 
 // Mock portfolio data
 const mockPortfolio = {
@@ -94,6 +95,47 @@ export default function PortfolioManagement() {
   const [selectedStock, setSelectedStock] = useState<any>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const { user, loading, error } = useUserData()
+  const { marketStocks, loading: stocksLoading, error: stocksError } = useStocks()
+
+  // Update portfolio with real-time stock prices
+  useEffect(() => {
+    if (marketStocks.length > 0) {
+      setPortfolio(prevPortfolio => {
+        const updatedAssets = prevPortfolio.assets.map(asset => {
+          if (asset.type === 'stock') {
+            const realStock = marketStocks.find(stock => stock.symbol === asset.symbol)
+            if (realStock) {
+              const updatedTotalValue = realStock.price * asset.quantity
+              const updatedGain = updatedTotalValue - (asset.purchasePrice * asset.quantity)
+              const updatedGainPercent = ((updatedGain / (asset.purchasePrice * asset.quantity)) * 100)
+              
+              return {
+                ...asset,
+                currentPrice: realStock.price,
+                totalValue: updatedTotalValue,
+                gain: updatedGain,
+                gainPercent: updatedGainPercent
+              }
+            }
+          }
+          return asset
+        })
+
+        // Recalculate portfolio totals
+        const totalValue = updatedAssets.reduce((sum, asset) => sum + asset.totalValue, 0)
+        const totalGain = updatedAssets.reduce((sum, asset) => sum + asset.gain, 0)
+        const totalGainPercent = totalGain > 0 ? (totalGain / (totalValue - totalGain)) * 100 : 0
+
+        return {
+          ...prevPortfolio,
+          assets: updatedAssets,
+          totalValue,
+          totalGain,
+          totalGainPercent
+        }
+      })
+    }
+  }, [marketStocks])
 
   const handleRemoveAsset = (assetId: string) => {
     const assetToRemove = portfolio.assets.find((asset) => asset.id === assetId)
@@ -160,7 +202,11 @@ export default function PortfolioManagement() {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Portfolio Management</h1>
-            <p className="text-gray-600 mt-2">Manage your financial portfolio with real-time insights</p>
+            <p className="text-gray-600 mt-2">
+              Manage your financial portfolio with real-time insights
+              {stocksLoading && <span className="ml-2 text-blue-600">(Updating stock prices...)</span>}
+              {stocksError && <span className="ml-2 text-red-600">(Stock data unavailable)</span>}
+            </p>
           </div>
         </div>
 

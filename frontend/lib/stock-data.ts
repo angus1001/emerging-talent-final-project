@@ -73,7 +73,7 @@ export async function getAllStocks(): Promise<Stock[]> {
  */
 export async function getStockById(stockId: number): Promise<Stock> {
   try {
-    const response = await fetch(`${API_BASE_URL}/v1/stocks/${stockId}`, {
+    const response = await fetch(`${API_BASE_URL}/stocks/${stockId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
