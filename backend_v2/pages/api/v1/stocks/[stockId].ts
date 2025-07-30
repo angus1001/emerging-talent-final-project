@@ -16,13 +16,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
       const stock = await prisma.stock.findUnique({
         where: { stock_id: stockIdInt },
+        include: {
+          stockPriceHistorys: {
+            orderBy: {
+              date: 'asc'
+            }
+          }
+        }
       });
       
       if (!stock) {
         return res.status(404).json({ error: 'Stock not found' });
       }
       
-      return res.status(200).json(stock);
+      // 构建响应，包含历史价格数据
+      const response = {
+        ...stock,
+        history_price: stock.stockPriceHistorys.map(history => ({
+          date: history.date,
+          close_price: history.close_price
+        }))
+      };
+      
+      return res.status(200).json(response);
     } catch (error) {
       return res.status(500).json({ error: 'Internal server error' });
     }
