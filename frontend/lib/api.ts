@@ -99,6 +99,154 @@ export interface CreateUserData {
   location?: string;
 }
 
+// Portfolio & Holdings Type Definitions
+export interface ApiStock {
+  stock_id: number;
+  symbol: string;
+  company_name: string;
+  current_price: number;
+  last_updated: string;
+  exchange: string;
+  volume: string;
+  sector: string;
+  market_cap: string;
+  company_info: string;
+  in_list: boolean;
+  history_price: Array<{
+    date: string;
+    price: number;
+  }>;
+  added_at?: string;
+}
+
+export interface ApiHolding {
+  holding_id: number;
+  user_id: number;
+  stock_id: number;
+  holding_number: number;
+  average_price: number;
+  holding_list: ApiStock[];
+  cash: number;
+  total_value: number;
+  last_updated: string;
+}
+
+export interface ApiPortfolioSummary {
+  total_value: number;
+  cash_balance: number;
+  stock_value: number;
+  holdings: ApiHolding[];
+  last_updated: string;
+}
+
+export interface ApiNetWorth {
+  net_worth_id: number;
+  user_id: number;
+  total_balance: number;
+  stock_value: number;
+  date_recorded: string;
+}
+
+export interface ApiOrder {
+  order_id: number;
+  user_id: number;
+  stock_id: number;
+  order_type: 'BUY' | 'SELL';
+  quantity: number;
+  price_per_share: number;
+  total_value: number;
+  date: string;
+  status: 'PENDING' | 'EXECUTED' | 'CANCELLED';
+  duration: string;
+}
+
+export interface ApiWatchlist {
+  watchlist_id: number;
+  user_id: number;
+  stock_list: ApiStock[];
+  display_name: string;
+  created_at: string;
+}
+
+// Portfolio API functions
+export const portfolioApi = {
+  // Get user's portfolio summary
+  getPortfolioSummary: (userId: number) => 
+    apiRequest<ApiPortfolioSummary>(`/users/${userId}/portfolio`),
+  
+  // Get net worth history
+  getNetWorthHistory: (userId: number, period?: '1d' | '1w' | '1m' | '3m' | '6m' | '1y') => {
+    const params = period ? `?period=${period}` : '';
+    return apiRequest<ApiNetWorth[]>(`/users/${userId}/net-worth${params}`);
+  },
+  
+  // Get all holdings for a user
+  getUserHoldings: (userId: number) => 
+    apiRequest<ApiHolding[]>(`/users/${userId}/holdings`),
+  
+  // Get holding by ID
+  getHoldingById: (holdingId: number) => 
+    apiRequest<ApiHolding>(`/holdings/${holdingId}`),
+  
+  // Delete a holding (sell all shares)
+  deleteHolding: (holdingId: number) =>
+    apiRequest<{ message: string }>(`/holdings/${holdingId}`, {
+      method: 'DELETE',
+    }),
+};
+
+// Orders API functions
+export const ordersApi = {
+  // Create a new order
+  createOrder: (orderData: Omit<ApiOrder, 'order_id'>) =>
+    apiRequest<ApiOrder>('/orders', {
+      method: 'POST',
+      body: JSON.stringify(orderData),
+    }),
+  
+  // Get all orders (admin only)
+  getAllOrders: () => apiRequest<ApiOrder[]>('/orders'),
+  
+  // Get orders for a user
+  getUserOrders: (userId: number) => 
+    apiRequest<ApiOrder[]>(`/users/${userId}/orders`),
+  
+  // Get order by ID
+  getOrderById: (orderId: number) => 
+    apiRequest<ApiOrder>(`/orders/${orderId}`),
+  
+  // Update order status
+  updateOrderStatus: (orderId: number, status: 'PENDING' | 'EXECUTED' | 'CANCELLED') =>
+    apiRequest<ApiOrder>(`/orders/${orderId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
+    }),
+};
+
+// Watchlist API functions
+export const watchlistApi = {
+  // Get user's watchlist
+  getUserWatchlist: (userId: number) => 
+    apiRequest<ApiWatchlist[]>(`/users/${userId}/watchlist`),
+  
+  // Add item to watchlist
+  addToWatchlist: (userId: number, watchlistData: Omit<ApiWatchlist, 'watchlist_id' | 'user_id'>) =>
+    apiRequest<ApiWatchlist>(`/users/${userId}/watchlist`, {
+      method: 'POST',
+      body: JSON.stringify(watchlistData),
+    }),
+  
+  // Get watchlist item by ID
+  getWatchlistItemById: (watchlistId: number) => 
+    apiRequest<ApiWatchlist>(`/watchlist/${watchlistId}`),
+  
+  // Remove item from watchlist
+  removeFromWatchlist: (watchlistId: number) =>
+    apiRequest<{ message: string }>(`/watchlist/${watchlistId}`, {
+      method: 'DELETE',
+    }),
+};
+
 // Helper function to get full name
 export const getFullName = (user: ApiUser): string => {
   return `${user.first_name} ${user.last_name}`;
@@ -111,4 +259,18 @@ export const formatDate = (dateString: string): string => {
     month: 'long',
     day: 'numeric',
   });
+};
+
+// Helper function to format currency
+export const formatCurrency = (amount: number): string => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+  }).format(amount);
+};
+
+// Helper function to calculate percentage change
+export const calculatePercentageChange = (current: number, previous: number): number => {
+  if (previous === 0) return 0;
+  return ((current - previous) / previous) * 100;
 };

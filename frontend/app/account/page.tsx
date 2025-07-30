@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
 import { useUserData } from "@/hooks/use-user-data"
+import { usePortfolioSummary, useUserHoldings, useUserWatchlist } from "@/hooks/use-portfolio-data"
+import { convertApiHoldingsToUserHoldings, formatHoldingValue, formatChange } from "@/lib/portfolio-data"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { 
   User, 
@@ -22,7 +24,8 @@ import {
   PieChart,
   Activity,
   Eye,
-  Briefcase
+  Briefcase,
+  Loader2
 } from "lucide-react"
 import Navigation from "@/components/navigation"
 import StockDetailModal from "@/components/stock-detail-modal"
@@ -97,64 +100,39 @@ const marketData = [
   }
 ]
 
-// Mock user portfolio holdings
-const userHoldings = [
-  {
-    id: "1",
-    symbol: "AAPL",
-    name: "Apple Inc.",
-    quantity: 50,
-    averagePrice: 185.00,
-    currentPrice: 213.88,
-    totalValue: 10694.00,
-    gain: 1444.00,
-    gainPercent: 15.60,
-    sector: "Technology"
-  },
-  {
-    id: "2",
-    symbol: "MSFT",
-    name: "Microsoft Corporation",
-    quantity: 25,
-    averagePrice: 380.00,
-    currentPrice: 412.80,
-    totalValue: 10320.00,
-    gain: 820.00,
-    gainPercent: 8.63,
-    sector: "Technology"
-  },
-  {
-    id: "3",
-    symbol: "GOOGL",
-    name: "Alphabet Inc.",
-    quantity: 30,
-    averagePrice: 150.00,
-    currentPrice: 142.50,
-    totalValue: 4275.00,
-    gain: -225.00,
-    gainPercent: -5.00,
-    sector: "Technology"
-  }
-]
-
-// Mock watchlist
-const mockWatchlist = ["AAPL", "NVDA", "MSFT", "TSLA"]
-
 export default function AccountPage() {
-  const { user, loading, error, refetchUser, updateUser } = useUserData()
+  const { user, loading: userLoading, error: userError, refetchUser, updateUser } = useUserData()
+  const userId = user?.id ? parseInt(user.id) : 1 // Default to user ID 1 for demo
+  
+  // Portfolio data hooks
+  const { portfolio, loading: portfolioLoading, error: portfolioError } = usePortfolioSummary(userId)
+  const { holdings, loading: holdingsLoading, error: holdingsError } = useUserHoldings(userId)
+  const { watchlist, loading: watchlistLoading, error: watchlistError } = useUserWatchlist(userId)
+  
   const [selectedStock, setSelectedStock] = useState<any>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   
-  // Account information
+  // Convert API holdings to frontend format
+  const userHoldings = holdings ? convertApiHoldingsToUserHoldings(holdings) : []
+  
+  // Extract watchlist symbols
+  const mockWatchlist = watchlist?.flatMap(item => 
+    item.stock_list.map(stock => stock.symbol)
+  ) || []
+  
+  // Account information from portfolio API
   const accountInfo = {
     accountNumber: "ACC-789-456-123",
     accountType: "Premium Trading Account",
     openDate: "January 15, 2024",
-    totalPortfolioValue: 25289.00,
-    totalGain: 2039.00,
-    totalGainPercent: 8.77,
-    availableCash: 5000.00,
-    buyingPower: 10000.00
+    totalPortfolioValue: portfolio?.total_value || 0,
+    totalGain: userHoldings.reduce((sum, holding) => sum + holding.change, 0),
+    totalGainPercent: userHoldings.length > 0 
+      ? (userHoldings.reduce((sum, holding) => sum + holding.change, 0) / 
+         userHoldings.reduce((sum, holding) => sum + (holding.value - holding.change), 0)) * 100
+      : 0,
+    availableCash: portfolio?.cash_balance || 0,
+    buyingPower: (portfolio?.cash_balance || 0) * 2 // Assuming 2:1 margin
   }
 
   const handleHomeClick = () => {
@@ -179,6 +157,32 @@ export default function AccountPage() {
     setSelectedStock(null)
   }
 
+  // Loading state
+  if (userLoading || portfolioLoading || holdingsLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="flex items-center space-x-2">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span>Loading account data...</span>
+        </div>
+      </div>
+    )
+  }
+
+  // Error state
+  if (userError || portfolioError || holdingsError) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-lg font-semibold text-red-600 mb-2">Error Loading Account</h2>
+          <p className="text-gray-600">
+            {userError || portfolioError || holdingsError}
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   const handleBuy = (orderData: any) => {
     console.log(`Buy order:`, orderData.orderDetails)
   }
@@ -190,62 +194,11 @@ export default function AccountPage() {
   // Get watchlist stock data
   const watchlistStockData = marketData.filter(stock => mockWatchlist.includes(stock.symbol))
 
-  // Handle loading state
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Navigation 
-          user={user}
-          loading={loading}
-          onHomeClick={handleHomeClick}
-          onMarketsClick={handleMarketsClick}
-          onProfileClick={handleProfileClick}
-          onLogout={() => console.log("User logged out")}
-        />
-        <div className="container mx-auto p-6 flex items-center justify-center">
-          <div className="flex items-center space-x-2">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-            <span>Loading account data...</span>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // Handle error state
-  if (error || !user) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Navigation 
-          user={user}
-          loading={loading}
-          onHomeClick={handleHomeClick}
-          onMarketsClick={handleMarketsClick}
-          onProfileClick={handleProfileClick}
-          onLogout={() => console.log("User logged out")}
-        />
-        <div className="container mx-auto p-6">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="text-red-800">
-              {error || 'Failed to load user data. Please try again.'}
-            </p>
-            <button 
-              onClick={refetchUser}
-              className="mt-2 text-red-600 hover:text-red-800 underline"
-            >
-              Retry
-            </button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation 
         user={user}
-        loading={loading}
+        loading={userLoading}
         onHomeClick={handleHomeClick}
         onMarketsClick={handleMarketsClick}
         onProfileClick={handleProfileClick}
@@ -322,21 +275,23 @@ export default function AccountPage() {
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* User Profile */}
-                <div className="flex items-center space-x-4">
-                  <Avatar className="w-16 h-16">
-                    <AvatarImage src={user.avatar} alt={user.name} />
-                    <AvatarFallback className="text-lg">
-                      {getInitials(user.name)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="space-y-1">
-                    <h3 className="text-xl font-semibold">{user.name}</h3>
-                    <p className="text-sm text-gray-600">{user.email}</p>
-                    <Badge variant={user.accountType === "Premium" ? "default" : "secondary"}>
-                      {user.accountType} Account
-                    </Badge>
+                {user && (
+                  <div className="flex items-center space-x-4">
+                    <Avatar className="w-16 h-16">
+                      <AvatarImage src={user.avatar} alt={user.name} />
+                      <AvatarFallback className="text-lg">
+                        {getInitials(user.name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="space-y-1">
+                      <h3 className="text-xl font-semibold">{user.name}</h3>
+                      <p className="text-sm text-gray-600">{user.email}</p>
+                      <Badge variant={user.accountType === "Premium" ? "default" : "secondary"}>
+                        {user.accountType} Account
+                      </Badge>
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <Separator />
 
@@ -408,22 +363,22 @@ export default function AccountPage() {
                               </button>
                               <p className="text-sm text-gray-600">{holding.name}</p>
                               <p className="text-xs text-gray-500">
-                                {holding.quantity} shares @ ${holding.averagePrice}
+                                {holding.shares} shares @ ${holding.averagePrice}
                               </p>
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="font-semibold text-lg">${holding.totalValue.toLocaleString()}</p>
+                            <p className="font-semibold text-lg">${holding.value.toLocaleString()}</p>
                             <div className={`flex items-center text-sm ${
-                              holding.gain >= 0 ? "text-green-600" : "text-red-600"
+                              holding.change >= 0 ? "text-green-600" : "text-red-600"
                             }`}>
-                              {holding.gain >= 0 ? (
+                              {holding.change >= 0 ? (
                                 <TrendingUp className="w-4 h-4 mr-1" />
                               ) : (
                                 <TrendingDown className="w-4 h-4 mr-1" />
                               )}
-                              {holding.gain >= 0 ? "+" : ""}
-                              ${holding.gain.toFixed(2)} ({holding.gainPercent >= 0 ? "+" : ""}{holding.gainPercent}%)
+                              {holding.change >= 0 ? "+" : ""}
+                              ${holding.change.toFixed(2)} ({holding.changePercent >= 0 ? "+" : ""}{holding.changePercent.toFixed(2)}%)
                             </div>
                             <p className="text-xs text-gray-500">${holding.currentPrice}</p>
                           </div>

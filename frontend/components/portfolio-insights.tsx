@@ -135,8 +135,11 @@ export default function PortfolioInsights({ portfolio }: InsightsProps) {
     }
   }
 
-  // Filter news relevant to portfolio assets
-  const portfolioSymbols = portfolio.assets.map(asset => asset.symbol.toLowerCase())
+  // Filter news relevant to portfolio assets - handle undefined symbols
+  const portfolioSymbols = portfolio.assets
+    .filter(asset => asset.symbol) // Filter out assets without symbols
+    .map(asset => asset.symbol.toLowerCase())
+  
   const relevantNews = mockNews.filter(news => 
     portfolioSymbols.some(symbol => 
       news.title.toLowerCase().includes(symbol) || 

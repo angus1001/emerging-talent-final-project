@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { TrendingUp, TrendingDown, DollarSign, PieChart, BarChart3 } from "lucide-react"
+import { TrendingUp, TrendingDown, DollarSign, PieChart, BarChart3, Loader2 } from "lucide-react"
 import PortfolioOverview from "@/components/portfolio-overview"
 import AssetManagement from "@/components/asset-management"
 import Navigation from "@/components/navigation"
@@ -12,6 +12,8 @@ import PortfolioInsights from "@/components/portfolio-insights"
 import StockDetailModal from "@/components/stock-detail-modal"
 import { useUserData } from "@/hooks/use-user-data"
 import { useStocks } from "@/hooks/use-stock-data"
+import { usePortfolioSummary } from "@/hooks/use-portfolio-data"
+import { convertApiPortfolioToSummary } from "@/lib/portfolio-data"
 
 // Mock portfolio data
 const mockPortfolio = {
@@ -91,62 +93,29 @@ const mockPortfolio = {
 }
 
 export default function PortfolioManagement() {
-  const [portfolio, setPortfolio] = useState(mockPortfolio)
   const [selectedStock, setSelectedStock] = useState<any>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const { user, loading, error } = useUserData()
+  const { user, loading: userLoading, error: userError } = useUserData()
   const { marketStocks, loading: stocksLoading, error: stocksError } = useStocks()
+  
+  const userId = user?.id ? parseInt(user.id) : 1
+  const { portfolio: apiPortfolio, loading: portfolioLoading, error: portfolioError } = usePortfolioSummary(userId)
+  
+  // Convert API portfolio to frontend format
+  const portfolio = apiPortfolio ? convertApiPortfolioToSummary(apiPortfolio) : null
 
-  // Update portfolio with real-time stock prices
+  // Update portfolio assets with real-time stock prices
   useEffect(() => {
-    if (marketStocks.length > 0) {
-      setPortfolio(prevPortfolio => {
-        const updatedAssets = prevPortfolio.assets.map(asset => {
-          if (asset.type === 'stock') {
-            const realStock = marketStocks.find(stock => stock.symbol === asset.symbol)
-            if (realStock) {
-              const updatedTotalValue = realStock.price * asset.quantity
-              const updatedGain = updatedTotalValue - (asset.purchasePrice * asset.quantity)
-              const updatedGainPercent = ((updatedGain / (asset.purchasePrice * asset.quantity)) * 100)
-              
-              return {
-                ...asset,
-                currentPrice: realStock.price,
-                totalValue: updatedTotalValue,
-                gain: updatedGain,
-                gainPercent: updatedGainPercent
-              }
-            }
-          }
-          return asset
-        })
-
-        // Recalculate portfolio totals
-        const totalValue = updatedAssets.reduce((sum, asset) => sum + asset.totalValue, 0)
-        const totalGain = updatedAssets.reduce((sum, asset) => sum + asset.gain, 0)
-        const totalGainPercent = totalGain > 0 ? (totalGain / (totalValue - totalGain)) * 100 : 0
-
-        return {
-          ...prevPortfolio,
-          assets: updatedAssets,
-          totalValue,
-          totalGain,
-          totalGainPercent
-        }
-      })
+    if (marketStocks.length > 0 && portfolio) {
+      // Update stock prices in real-time if needed
+      // This is handled automatically by the portfolio hook
     }
-  }, [marketStocks])
+  }, [marketStocks, portfolio])
 
   const handleRemoveAsset = (assetId: string) => {
-    const assetToRemove = portfolio.assets.find((asset) => asset.id === assetId)
-    if (assetToRemove) {
-      setPortfolio((prev) => ({
-        ...prev,
-        assets: prev.assets.filter((asset) => asset.id !== assetId),
-        totalValue: prev.totalValue - assetToRemove.totalValue,
-        totalGain: prev.totalGain - assetToRemove.gain,
-      }))
-    }
+    // This would need to call the API to actually remove/sell the asset
+    console.log('Remove asset:', assetId)
+    // TODO: Implement API call to sell holding
   }
 
   const openStockModal = (asset: any) => {
@@ -184,12 +153,50 @@ export default function PortfolioManagement() {
     // orderData.orderDetails contains: action, quantity, price, orderType, duration, totalValue
   }
 
+  // Loading state
+  if (userLoading || portfolioLoading || stocksLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="flex items-center space-x-2">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span>Loading portfolio...</span>
+        </div>
+      </div>
+    )
+  }
+
+  // Error state
+  if (userError || portfolioError || stocksError) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-lg font-semibold text-red-600 mb-2">Error Loading Portfolio</h2>
+          <p className="text-gray-600">
+            {userError || portfolioError || stocksError}
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  // No portfolio data
+  if (!portfolio) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-lg font-semibold text-gray-600 mb-2">No Portfolio Data</h2>
+          <p className="text-gray-500">Unable to load portfolio information.</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navigation */}
       <Navigation 
         user={user}
-        loading={loading}
+        loading={userLoading}
         onHomeClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
         onMarketsClick={() => window.location.href = "/markets"}
         onAccountClick={() => window.location.href = "/account"}

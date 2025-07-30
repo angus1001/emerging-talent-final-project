@@ -43,35 +43,54 @@ const historicalData = [
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"]
 
 export default function PortfolioOverview({ portfolio, onStockClick }: PortfolioOverviewProps) {
-  // Calculate asset allocation
-  const assetAllocation = portfolio.assets.reduce((acc: any, asset: any) => {
-    const percentage = (asset.totalValue / portfolio.totalValue) * 100
-    acc[asset.type] = (acc[asset.type] || 0) + percentage
-    return acc
-  }, {})
+  // Early return if no portfolio data
+  if (!portfolio || !portfolio.assets || portfolio.assets.length === 0) {
+    return (
+      <div className="space-y-6">
+        <Card className="w-full">
+          <CardContent className="flex items-center justify-center h-32">
+            <p className="text-muted-foreground">No portfolio data available</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
-  // Calculate sector allocation for stocks
-  const sectorAllocation = portfolio.assets
-    .filter((asset: any) => asset.type === "stock")
-    .reduce((acc: any, asset: any) => {
-      const percentage = (asset.totalValue / portfolio.totalValue) * 100
-      acc[asset.sector] = (acc[asset.sector] || 0) + percentage
-      return acc
-    }, {})
+  // Calculate asset allocation with safe property access
+  const assetAllocation = portfolio?.assets?.reduce((acc: any, asset: any) => {
+    const assetValue = asset.totalValue || asset.value || 0;
+    const totalValue = portfolio.totalValue || 1; // Prevent division by zero
+    const percentage = (assetValue / totalValue) * 100;
+    const assetType = asset.type || 'unknown';
+    acc[assetType] = (acc[assetType] || 0) + percentage;
+    return acc;
+  }, {}) || {};
 
-  // Prepare data for pie chart
-  const pieData = portfolio.assets.map((asset: any, index: number) => ({
-    name: asset.symbol,
-    value: asset.totalValue,
-    percentage: ((asset.totalValue / portfolio.totalValue) * 100).toFixed(1),
-  }))
+  // Calculate sector allocation for stocks with safe property access
+  const sectorAllocation = portfolio?.assets
+    ?.filter((asset: any) => asset.type === "stock")
+    ?.reduce((acc: any, asset: any) => {
+      const assetValue = asset.totalValue || asset.value || 0;
+      const totalValue = portfolio.totalValue || 1; // Prevent division by zero
+      const percentage = (assetValue / totalValue) * 100;
+      const sector = asset.sector || 'Unknown';
+      acc[sector] = (acc[sector] || 0) + percentage;
+      return acc;
+    }, {}) || {};
 
-  // Prepare data for bar chart (asset performance)
-  const barData = portfolio.assets.map((asset: any) => ({
-    name: asset.symbol,
-    gain: asset.gain,
-    gainPercent: asset.gainPercent,
-  }))
+  // Prepare data for pie chart with safe property access
+  const pieData = portfolio?.assets?.map((asset: any, index: number) => ({
+    name: asset.symbol || asset.name || 'Unknown',
+    value: asset.totalValue || asset.value || 0,
+    percentage: (((asset.totalValue || asset.value || 0) / (portfolio.totalValue || 1)) * 100).toFixed(1),
+  })) || [];
+
+  // Prepare data for bar chart (asset performance) with safe property access
+  const barData = portfolio?.assets?.map((asset: any) => ({
+    name: asset.symbol || asset.name || 'Unknown',
+    gain: asset.gain || asset.change || 0,
+    gainPercent: asset.gainPercent || asset.changePercent || 0,
+  })) || [];
 
   return (
     <div className="space-y-6">
@@ -178,33 +197,33 @@ export default function PortfolioOverview({ portfolio, onStockClick }: Portfolio
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {portfolio.assets
-                .sort((a: any, b: any) => b.gainPercent - a.gainPercent)
-                .slice(0, 3)
-                .map((asset: any) => (
+              {portfolio?.assets
+                ?.sort((a: any, b: any) => (b.gainPercent || b.changePercent || 0) - (a.gainPercent || a.changePercent || 0))
+                ?.slice(0, 3)
+                ?.map((asset: any) => (
                   <div key={asset.id} className="flex items-center justify-between">
                     <div>
                       <div 
                         className={`font-medium ${onStockClick && asset.type === 'stock' ? 'text-blue-600 hover:text-blue-800 hover:underline cursor-pointer' : ''}`}
                         onClick={() => onStockClick && asset.type === 'stock' && onStockClick(asset)}
                       >
-                        {asset.symbol}
+                        {asset.symbol || asset.name || 'Unknown'}
                       </div>
-                      <div className="text-sm text-muted-foreground">{asset.name}</div>
+                      <div className="text-sm text-muted-foreground">{asset.name || 'Unknown Asset'}</div>
                     </div>
                     <div className="text-right">
                       <div className="flex items-center gap-1">
-                        {asset.gainPercent > 0 ? (
+                        {(asset.gainPercent || asset.changePercent || 0) > 0 ? (
                           <TrendingUp className="w-4 h-4 text-green-600" />
                         ) : (
                           <TrendingDown className="w-4 h-4 text-red-600" />
                         )}
-                        <span className={asset.gainPercent > 0 ? "text-green-600" : "text-red-600"}>
-                          {asset.gainPercent > 0 ? "+" : ""}
-                          {asset.gainPercent.toFixed(2)}%
+                        <span className={(asset.gainPercent || asset.changePercent || 0) > 0 ? "text-green-600" : "text-red-600"}>
+                          {(asset.gainPercent || asset.changePercent || 0) > 0 ? "+" : ""}
+                          {((asset.gainPercent || asset.changePercent || 0)).toFixed(2)}%
                         </span>
                       </div>
-                      <div className="text-sm text-muted-foreground">${asset.totalValue.toLocaleString()}</div>
+                      <div className="text-sm text-muted-foreground">${(asset.totalValue || asset.value || 0).toLocaleString()}</div>
                     </div>
                   </div>
                 ))}
