@@ -6,11 +6,12 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { TrendingUp, TrendingDown, Activity, Volume2, Heart, HeartOff, Search, Filter } from "lucide-react"
+import { TrendingUp, TrendingDown, Activity, Heart, HeartOff, Search, Filter, ChevronLeft, ChevronRight } from "lucide-react"
 import Navigation from "@/components/navigation"
 import StockDetailModal from "@/components/stock-detail-modal"
 import { useUserData } from "@/hooks/use-user-data"
 import { useStocks } from "@/hooks/use-stock-data"
+import { useUserWatchlist } from "@/hooks/use-portfolio-data"
 
 const getSectorBadgeColor = (sector: string) => {
   switch (sector) {
@@ -32,11 +33,16 @@ const getSectorBadgeColor = (sector: string) => {
 export default function MarketsPage() {
   const { user, loading: userLoading } = useUserData()
   const { marketStocks, loading: stocksLoading, error: stocksError } = useStocks()
-  const [watchlistStocks, setWatchlistStocks] = useState<string[]>(["AAPL", "NVDA", "MSFT"])
+  const userId = user?.id ? parseInt(user.id) : 1 // Default to user ID 1 for demo
+  const { watchlist, loading: watchlistLoading, addToWatchlist, removeFromWatchlist } = useUserWatchlist(userId)
   const [selectedStock, setSelectedStock] = useState<any>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [sectorFilter, setSectorFilter] = useState<string>("all")
+  const [currentPage, setCurrentPage] = useState(1)
+  const [watchlistCurrentPage, setWatchlistCurrentPage] = useState(1)
+  const itemsPerPage = 10
+  const watchlistItemsPerPage = 9
 
   const handleHomeClick = () => {
     window.location.href = "/"
@@ -46,17 +52,46 @@ export default function MarketsPage() {
     window.location.href = "/profile"
   }
 
-  const toggleWatchlist = (symbol: string) => {
-    setWatchlistStocks(prev => 
-      prev.includes(symbol) 
-        ? prev.filter(s => s !== symbol)
-        : [...prev, symbol]
-    )
+  const toggleWatchlist = async (stock: any) => {
+    const isInWatchlist = watchlist?.some(item => item.stock.symbol === stock.symbol)
+    
+    if (isInWatchlist) {
+      // Remove from watchlist
+      const watchlistItem = watchlist?.find(item => item.stock.symbol === stock.symbol)
+      if (watchlistItem) {
+        await removeFromWatchlist(watchlistItem.watchlist_id)
+      }
+    } else {
+      // Add to watchlist
+      const watchlistData = {
+        stock_id: stock.id || 1, // You may need to map this properly based on your stock data
+        stock: stock,
+        display_name: stock.name,
+        created_at: new Date().toISOString()
+      }
+      await addToWatchlist(watchlistData)
+    }
   }
 
-  const isInWatchlist = (symbol: string) => watchlistStocks.includes(symbol)
+  const isInWatchlist = (symbol: string) => watchlist?.some(item => item.stock.symbol === symbol) || false
 
-  const watchlistStockData = marketStocks.filter(stock => watchlistStocks.includes(stock.symbol))
+  // Get watchlist symbols for filtering
+  const watchlistSymbols = watchlist?.map(item => item.stock.symbol) || []
+  const watchlistStockData = marketStocks.filter(stock => watchlistSymbols.includes(stock.symbol))
+
+  // Watchlist pagination logic
+  const watchlistTotalPages = Math.ceil(watchlistStockData.length / watchlistItemsPerPage)
+  const watchlistStartIndex = (watchlistCurrentPage - 1) * watchlistItemsPerPage
+  const watchlistEndIndex = watchlistStartIndex + watchlistItemsPerPage
+  const paginatedWatchlistData = watchlistStockData.slice(watchlistStartIndex, watchlistEndIndex)
+
+  const handleWatchlistPreviousPage = () => {
+    setWatchlistCurrentPage(prev => Math.max(1, prev - 1))
+  }
+
+  const handleWatchlistNextPage = () => {
+    setWatchlistCurrentPage(prev => Math.min(watchlistTotalPages, prev + 1))
+  }
 
   // Filter and search logic
   const filteredMarketData = marketStocks.filter((stock) => {
@@ -71,6 +106,30 @@ export default function MarketsPage() {
 
   // Get unique sectors for filter dropdown
   const uniqueSectors = Array.from(new Set(marketStocks.map(stock => stock.sector)))
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredMarketData.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const paginatedData = filteredMarketData.slice(startIndex, endIndex)
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, sectorFilter])
+
+  // Reset watchlist page when watchlist data changes
+  useEffect(() => {
+    setWatchlistCurrentPage(1)
+  }, [watchlist])
+
+  const handlePreviousPage = () => {
+    setCurrentPage(prev => Math.max(1, prev - 1))
+  }
+
+  const handleNextPage = () => {
+    setCurrentPage(prev => Math.min(totalPages, prev + 1))
+  }
 
   const openStockModal = (stock: any) => {
     setSelectedStock(stock)
@@ -95,7 +154,7 @@ export default function MarketsPage() {
   }
 
   // Show loading state
-  if (stocksLoading) {
+  if (stocksLoading || watchlistLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Navigation 
@@ -229,9 +288,9 @@ export default function MarketsPage() {
                 <CardDescription>Your favorite stocks to watch</CardDescription>
               </CardHeader>
               <CardContent>
-                {watchlistStockData.length > 0 ? (
+                {paginatedWatchlistData.length > 0 ? (
                   <div className="space-y-3">
-                    {watchlistStockData.map((stock) => (
+                    {paginatedWatchlistData.map((stock) => (
                       <div
                         key={stock.id}
                         className="p-3 border rounded-lg hover:bg-gray-50 transition-colors"
@@ -247,10 +306,10 @@ export default function MarketsPage() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => toggleWatchlist(stock.symbol)}
+                              onClick={() => toggleWatchlist(stock)}
                               className="p-1 h-auto"
                             >
-                              <Heart className="w-3 h-3 text-red-500 fill-red-500" />
+                              <Heart className={`w-3 h-3 text-red-500 ${isInWatchlist(stock.symbol) ? 'fill-red-500' : ''}`} />
                             </Button>
                           </div>
                         </div>
@@ -277,6 +336,40 @@ export default function MarketsPage() {
                     <Heart className="w-8 h-8 mx-auto mb-2 text-gray-300" />
                     <p className="text-sm">No stocks in watchlist yet</p>
                     <p className="text-xs text-gray-400">Click the heart icon to add favorites</p>
+                  </div>
+                )}
+
+                {/* Watchlist Pagination Controls */}
+                {watchlistStockData.length > watchlistItemsPerPage && (
+                  <div className="mt-4 flex items-center justify-between border-t pt-3">
+                    <div className="text-xs text-gray-600">
+                      {watchlistStartIndex + 1}-{Math.min(watchlistEndIndex, watchlistStockData.length)} of {watchlistStockData.length}
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleWatchlistPreviousPage}
+                        disabled={watchlistCurrentPage === 1}
+                        className="h-6 px-2"
+                      >
+                        <ChevronLeft className="w-3 h-3" />
+                      </Button>
+                      
+                      <span className="text-xs px-2">
+                        {watchlistCurrentPage}/{watchlistTotalPages}
+                      </span>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleWatchlistNextPage}
+                        disabled={watchlistCurrentPage === watchlistTotalPages}
+                        className="h-6 px-2"
+                      >
+                        <ChevronRight className="w-3 h-3" />
+                      </Button>
+                    </div>
                   </div>
                 )}
               </CardContent>
@@ -323,8 +416,8 @@ export default function MarketsPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {filteredMarketData.length > 0 ? (
-                    filteredMarketData.map((stock) => (
+                  {paginatedData.length > 0 ? (
+                    paginatedData.map((stock) => (
                     <div
                       key={stock.id}
                       className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
@@ -338,21 +431,17 @@ export default function MarketsPage() {
                             >
                               {stock.symbol}
                             </button>
-                            <Badge className={getSectorBadgeColor(stock.sector)}>
+                            {/* <Badge className={getSectorBadgeColor(stock.sector)}>
                               {stock.sector}
-                            </Badge>
+                            </Badge> */}
                           </div>
                           <span className="text-sm text-gray-600">{stock.name}</span>
-                          <span className="text-xs text-gray-500 max-w-md truncate">
-                            {stock.description}
-                          </span>
                         </div>
                       </div>
 
                       <div className="flex items-center space-x-6">
                         <div className="text-right">
                           <div className="text-sm text-gray-500 flex items-center">
-                            <Volume2 className="w-3 h-3 mr-1" />
                             Vol: {stock.volume}
                           </div>
                           <div className="text-xs text-gray-400">
@@ -379,7 +468,7 @@ export default function MarketsPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => toggleWatchlist(stock.symbol)}
+                          onClick={() => toggleWatchlist(stock)}
                           className="p-2"
                         >
                           {isInWatchlist(stock.symbol) ? (
@@ -398,6 +487,67 @@ export default function MarketsPage() {
                   </div>
                 )}
                 </div>
+
+                {/* Pagination Controls */}
+                {filteredMarketData.length > itemsPerPage && (
+                  <div className="mt-6 flex items-center justify-between border-t pt-4">
+                    <div className="text-sm text-gray-600">
+                      Showing {startIndex + 1}-{Math.min(endIndex, filteredMarketData.length)} of {filteredMarketData.length} stocks
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handlePreviousPage}
+                        disabled={currentPage === 1}
+                        className="flex items-center space-x-1"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                        <span>Previous</span>
+                      </Button>
+                      
+                      <div className="flex items-center space-x-1">
+                        {Array.from({ length: totalPages }, (_, i) => i + 1)
+                          .filter(page => {
+                            // Show first page, last page, current page, and pages around current page
+                            return page === 1 || 
+                                   page === totalPages || 
+                                   Math.abs(page - currentPage) <= 1
+                          })
+                          .map((page, index, array) => {
+                            // Add ellipsis if there's a gap
+                            const showEllipsis = index > 0 && page - array[index - 1] > 1
+                            return (
+                              <div key={page} className="flex items-center">
+                                {showEllipsis && (
+                                  <span className="px-2 text-gray-400">...</span>
+                                )}
+                                <Button
+                                  variant={currentPage === page ? "default" : "outline"}
+                                  size="sm"
+                                  onClick={() => setCurrentPage(page)}
+                                  className="w-8 h-8 p-0"
+                                >
+                                  {page}
+                                </Button>
+                              </div>
+                            )
+                          })}
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleNextPage}
+                        disabled={currentPage === totalPages}
+                        className="flex items-center space-x-1"
+                      >
+                        <span>Next</span>
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -411,6 +561,8 @@ export default function MarketsPage() {
         onClose={closeStockModal}
         onBuy={handleBuy}
         onSell={handleSell}
+        onWatchlistToggle={toggleWatchlist}
+        isInWatchlist={selectedStock ? isInWatchlist(selectedStock.symbol) : false}
       />
     </div>
   )

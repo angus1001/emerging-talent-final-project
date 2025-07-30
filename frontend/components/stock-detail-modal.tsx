@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
-import { TrendingUp, TrendingDown, Volume2, DollarSign, ChevronDown, ChevronUp } from "lucide-react"
+import { TrendingUp, TrendingDown, Volume2, DollarSign, ChevronDown, ChevronUp, Heart, HeartOff } from "lucide-react"
 import {
   LineChart,
   Line,
@@ -25,6 +25,8 @@ interface StockDetailModalProps {
   onClose: () => void
   onBuy: (stock: any) => void
   onSell: (stock: any) => void
+  onWatchlistToggle?: (stock: any) => void
+  isInWatchlist?: boolean
 }
 
 // Generate mock historical data for a stock
@@ -87,7 +89,15 @@ const getSectorBadgeColor = (sector: string) => {
   }
 }
 
-export default function StockDetailModal({ stock, isOpen, onClose, onBuy, onSell }: StockDetailModalProps) {
+export default function StockDetailModal({ 
+  stock, 
+  isOpen, 
+  onClose, 
+  onBuy, 
+  onSell, 
+  onWatchlistToggle, 
+  isInWatchlist = false 
+}: StockDetailModalProps) {
   const [historicalData, setHistoricalData] = useState<any[]>([])
   const [marketInfo, setMarketInfo] = useState<any>({})
   const [showBuyForm, setShowBuyForm] = useState(false)
@@ -302,6 +312,28 @@ export default function StockDetailModal({ stock, isOpen, onClose, onBuy, onSell
                 <CardDescription>Execute buy or sell orders</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
+                {/* Watchlist Button */}
+                {onWatchlistToggle && (
+                  <Button 
+                    variant={isInWatchlist ? "destructive" : "outline"}
+                    className="w-full"
+                    size="lg"
+                    onClick={() => onWatchlistToggle(stock)}
+                  >
+                    {isInWatchlist ? (
+                      <>
+                        <Heart className="w-4 h-4 mr-2 fill-current" />
+                        Remove from Watchlist
+                      </>
+                    ) : (
+                      <>
+                        <HeartOff className="w-4 h-4 mr-2" />
+                        Add to Watchlist
+                      </>
+                    )}
+                  </Button>
+                )}
+                
                 {/* Buy Button and Form */}
                 <div className="space-y-3">
                   <Button 

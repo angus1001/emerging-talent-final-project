@@ -76,11 +76,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       // 如果是买入订单，检查用户是否有足够的现金
       if (order_type === 'BUY') {
-        const userHolding = await prisma.holding.findFirst({
-          where: { user_id: parseInt(user_id) },
-        });
-
-        if (!userHolding || userHolding.cash < totalValue) {
+        if (!user.cash || user.cash < totalValue) {
           return res.status(400).json({ error: 'Insufficient funds' });
         }
       }
@@ -117,6 +113,65 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           stock: true,
         },
       });
+      // 买入后扣减用户现金并更新持仓
+      if (order_type === 'BUY') {
+        // 使用事务确保数据一致性
+        await prisma.$transaction(async (tx) => {
+          // 扣减用户现金
+          await tx.user.update({
+            where: { user_id: user.user_id },
+            data: {
+              cash: {
+                decrement: totalValue
+              }
+            }
+          });
+
+          // 查找用户持仓
+          let holding = await tx.holding.findFirst({
+            where: {
+              user_id: user.user_id,
+              stock_id: stock.stock_id
+            }
+          });
+
+          const newTotalValue = quantity * price_per_share;
+
+          if (!holding) {
+            // 如果没有持仓，创建新持仓
+            await tx.holding.create({
+              data: {
+                user_id: user.user_id,
+                stock_id: stock.stock_id,
+                holding_number: quantity,
+                average_price: price_per_share,
+                cash: newTotalValue, // 持仓的现金价值
+                total_value: newTotalValue,
+                last_updated: new Date()
+              }
+            });
+          } else {
+            // 已有持仓，更新持仓数量和平均买入价格
+            const oldTotalShares = holding.holding_number;
+            const oldAvgPrice = holding.average_price;
+            const newTotalShares = oldTotalShares + quantity;
+            // 重新计算加权平均买入价格
+            const newAvgPrice = ((oldTotalShares * oldAvgPrice) + (quantity * price_per_share)) / newTotalShares;
+            const updatedTotalValue = newTotalShares * newAvgPrice;
+
+            await tx.holding.update({
+              where: { holding_id: holding.holding_id },
+              data: {
+                holding_number: newTotalShares,
+                average_price: newAvgPrice,
+                cash: updatedTotalValue, // 持仓的现金价值
+                total_value: updatedTotalValue,
+                last_updated: new Date()
+              }
+            });
+          }
+        });
+       }
 
       return res.status(201).json(order);
     } catch (error) {
