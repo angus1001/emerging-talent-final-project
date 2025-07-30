@@ -1,7 +1,7 @@
 // API service layer for handling all backend API calls
 
 // Base API configuration
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:4523/m1/6849797-6564098-default';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api/proxy';
 
 // API Error class
 export class ApiError extends Error {
@@ -125,7 +125,7 @@ export interface ApiHolding {
   stock_id: number;
   holding_number: number;
   average_price: number;
-  holding_list: ApiStock[];
+  stock: ApiStock;  // 单个股票对象，不是数组
   cash: number;
   total_value: number;
   last_updated: string;
@@ -163,7 +163,8 @@ export interface ApiOrder {
 export interface ApiWatchlist {
   watchlist_id: number;
   user_id: number;
-  stock_list: ApiStock[];
+  stock_id: number;
+  stock: ApiStock; // Single stock object, not array
   display_name: string;
   created_at: string;
 }
@@ -245,6 +246,16 @@ export const watchlistApi = {
     apiRequest<{ message: string }>(`/watchlist/${watchlistId}`, {
       method: 'DELETE',
     }),
+};
+
+// Stock API functions
+export const stockApi = {
+  // Get all stocks
+  getAllStocks: () => apiRequest<ApiStock[]>('/stocks'),
+  
+  // Get stock by ID
+  getStockById: (stockId: number) => 
+    apiRequest<ApiStock>(`/stocks/${stockId}`),
 };
 
 // Helper function to get full name

@@ -157,7 +157,7 @@ export default function Chatbot() {
       {isOpen && (
         <div className="fixed bottom-28 right-4 z-50 w-80 h-96 animate-in slide-in-from-bottom-2 slide-in-from-right-2">
           <Card className="h-full flex flex-col shadow-lg border">
-            <CardHeader className="flex flex-row items-center justify-between p-4 bg-blue-600 text-white rounded-t-lg">
+            <CardHeader className="flex flex-row items-center justify-between p-4 bg-[#2fb56e] text-white rounded-t-lg">
               <div className="flex items-center space-x-2">
                 <Bot className="h-5 w-5" />
                 <div className="flex flex-col">
@@ -174,7 +174,7 @@ export default function Chatbot() {
                 variant="ghost"
                 size="sm"
                 onClick={toggleChat}
-                className="h-6 w-6 p-0 text-white hover:bg-blue-700"
+                className="h-6 w-6 p-0 text-white hover:bg-[#26a065]"
               >
                 <X className="h-4 w-4" />
               </Button>
@@ -198,14 +198,14 @@ export default function Chatbot() {
                       }`}
                     >
                       {message.sender === 'bot' && (
-                        <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+                        <div className="w-6 h-6 rounded-full bg-[#2fb56e] flex items-center justify-center flex-shrink-0">
                           <Bot className="h-3 w-3 text-white" />
                         </div>
                       )}
                       <div
                         className={`max-w-[70%] p-3 rounded-lg text-sm ${
                           message.sender === 'user'
-                            ? 'bg-blue-600 text-white ml-auto'
+                            ? 'bg-[#2fb56e] text-white ml-auto'
                             : 'bg-gray-100 text-gray-900'
                         }`}
                       >
@@ -228,7 +228,7 @@ export default function Chatbot() {
                   {/* 正在输入指示器 */}
                   {isTyping && (
                     <div className="flex items-start space-x-2">
-                      <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center flex-shrink-0">
+                      <div className="w-6 h-6 rounded-full bg-[#2fb56e] flex items-center justify-center flex-shrink-0">
                         <Bot className="h-3 w-3 text-white" />
                       </div>
                       <div className="bg-gray-100 p-3 rounded-lg">
@@ -274,7 +274,7 @@ export default function Chatbot() {
       {/* 悬浮按钮 */}
       <Button
         onClick={toggleChat}
-        className="fixed bottom-4 right-4 z-50 w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 shadow-lg"
+        className="fixed bottom-4 right-4 z-50 w-14 h-14 rounded-full bg-[#2fb56e] hover:bg-[#26a065] shadow-lg"
         size="lg"
       >
         {isOpen ? (

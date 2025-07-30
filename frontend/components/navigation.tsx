@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -92,8 +93,22 @@ export default function Navigation({
     <nav className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
-          {/* Navigation Buttons */}
-          <div className="flex items-center space-x-4">
+          {/* Logo and Navigation */}
+          <div className="flex items-center space-x-6">
+            {/* Logo */}
+            <div className="flex items-center space-x-2">
+              <Image
+                src="/logo.svg"
+                alt="SPEED Logo"
+                width={32}
+                height={32}
+                className="h-8 w-8"
+              />
+              <span className="text-xl font-bold text-gray-900">SPEED</span>
+            </div>
+            
+            {/* Navigation Buttons */}
+            <div className="flex items-center space-x-4">
             <Button 
               variant="ghost" 
               size="sm" 
@@ -123,11 +138,7 @@ export default function Navigation({
               <CreditCard className="h-4 w-4" />
               <span className="font-medium">Account</span>
             </Button>
-          </div>
-
-          {/* Center - App Title/Logo */}
-          <div className="flex-1 flex justify-center">
-            <h1 className="text-xl font-bold text-gray-900">Portfolio Manager</h1>
+            </div>
           </div>
 
           {/* User Menu */}

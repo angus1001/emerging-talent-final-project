@@ -116,8 +116,8 @@ export default function AccountPage() {
   const userHoldings = holdings ? convertApiHoldingsToUserHoldings(holdings) : []
   
   // Extract watchlist symbols
-  const mockWatchlist = watchlist?.flatMap(item => 
-    item.stock_list.map(stock => stock.symbol)
+  const mockWatchlist = watchlist?.map(item => 
+    item.stock.symbol
   ) || []
   
   // Account information from portfolio API

@@ -16,11 +16,15 @@ export interface PortfolioAsset {
   type: 'stock' | 'cash';
   symbol?: string;
   shares?: number;
+  quantity?: number; // alias for shares for AssetManagement component
   currentPrice?: number;
   averagePrice?: number;
   value: number;
+  totalValue?: number; // alias for value for AssetManagement component
   change?: number;
+  gain?: number; // alias for change for AssetManagement component
   changePercent?: number;
+  gainPercent?: number; // alias for changePercent for AssetManagement component
   sector?: string;
 }
 
@@ -49,30 +53,41 @@ export function convertApiPortfolioToSummary(apiPortfolio: ApiPortfolioSummary):
       name: 'Cash',
       type: 'cash',
       value: apiPortfolio.cash_balance,
+      totalValue: apiPortfolio.cash_balance,
+      quantity: 1,
+      shares: 1,
+      currentPrice: apiPortfolio.cash_balance,
+      change: 0,
+      gain: 0,
+      changePercent: 0,
+      gainPercent: 0,
     });
   }
 
   // Convert holdings to assets
   apiPortfolio.holdings.forEach(holding => {
-    holding.holding_list.forEach(stock => {
-      const currentValue = stock.current_price * holding.holding_number;
-      const costBasis = holding.average_price * holding.holding_number;
-      const change = currentValue - costBasis;
-      const changePercent = calculatePercentageChange(currentValue, costBasis);
+    const stock = holding.stock;
+    const currentValue = stock.current_price * holding.holding_number;
+    const costBasis = holding.average_price * holding.holding_number;
+    const change = currentValue - costBasis;
+    const changePercent = calculatePercentageChange(currentValue, costBasis);
 
-      assets.push({
-        id: `stock-${stock.stock_id}`,
-        name: stock.company_name,
-        type: 'stock',
-        symbol: stock.symbol,
-        shares: holding.holding_number,
-        currentPrice: stock.current_price,
-        averagePrice: holding.average_price,
-        value: currentValue,
-        change: change,
-        changePercent: changePercent,
-        sector: stock.sector,
-      });
+    assets.push({
+      id: `stock-${stock.stock_id}`,
+      name: stock.company_name,
+      type: 'stock',
+      symbol: stock.symbol,
+      shares: holding.holding_number,
+      quantity: holding.holding_number, // alias for AssetManagement component
+      currentPrice: stock.current_price,
+      averagePrice: holding.average_price,
+      value: currentValue,
+      totalValue: currentValue, // alias for AssetManagement component
+      change: change,
+      gain: change, // alias for AssetManagement component
+      changePercent: changePercent,
+      gainPercent: changePercent, // alias for AssetManagement component
+      sector: stock.sector,
     });
   });
 
@@ -119,24 +134,23 @@ export function convertApiHoldingsToUserHoldings(apiHoldings: ApiHolding[]): Use
   const userHoldings: UserHolding[] = [];
 
   apiHoldings.forEach(holding => {
-    holding.holding_list.forEach((stock, stockIndex) => {
-      const currentValue = stock.current_price * holding.holding_number;
-      const costBasis = holding.average_price * holding.holding_number;
-      const change = currentValue - costBasis;
-      const changePercent = calculatePercentageChange(currentValue, costBasis);
+    const stock = holding.stock;
+    const currentValue = stock.current_price * holding.holding_number;
+    const costBasis = holding.average_price * holding.holding_number;
+    const change = currentValue - costBasis;
+    const changePercent = calculatePercentageChange(currentValue, costBasis);
 
-      userHoldings.push({
-        id: `holding-${holding.holding_id}-${stock.symbol}-${stockIndex}`,
-        name: stock.company_name,
-        symbol: stock.symbol,
-        shares: holding.holding_number,
-        averagePrice: holding.average_price,
-        currentPrice: stock.current_price,
-        value: currentValue,
-        change,
-        changePercent,
-        sector: stock.sector,
-      });
+    userHoldings.push({
+      id: `holding-${holding.holding_id}-${stock.symbol}`,
+      name: stock.company_name,
+      symbol: stock.symbol,
+      shares: holding.holding_number,
+      averagePrice: holding.average_price,
+      currentPrice: stock.current_price,
+      value: currentValue,
+      change,
+      changePercent,
+      sector: stock.sector,
     });
   });
 

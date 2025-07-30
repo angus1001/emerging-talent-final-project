@@ -69,19 +69,19 @@ export default function AssetManagement({ assets, onRemoveAsset }: AssetManageme
                   <TableCell>
                     <Badge className={getAssetTypeColor(asset.type)}>{asset.type}</Badge>
                   </TableCell>
-                  <TableCell>{asset.quantity.toLocaleString()}</TableCell>
-                  <TableCell>${asset.currentPrice.toFixed(2)}</TableCell>
-                  <TableCell>${asset.totalValue.toLocaleString()}</TableCell>
+                  <TableCell>{(asset.quantity || 0).toLocaleString()}</TableCell>
+                  <TableCell>${(asset.currentPrice || 0).toFixed(2)}</TableCell>
+                  <TableCell>${(asset.totalValue || 0).toLocaleString()}</TableCell>
                   <TableCell>
-                    <div className={`flex items-center gap-1 ${asset.gain >= 0 ? "text-green-600" : "text-red-600"}`}>
-                      {asset.gain >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-                      {asset.gain >= 0 ? "+" : ""}${asset.gain.toLocaleString()}
+                    <div className={`flex items-center gap-1 ${(asset.gain || 0) >= 0 ? "text-green-600" : "text-red-600"}`}>
+                      {(asset.gain || 0) >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+                      {(asset.gain || 0) >= 0 ? "+" : ""}${(asset.gain || 0).toLocaleString()}
                     </div>
                   </TableCell>
                   <TableCell>
-                    <span className={asset.gainPercent >= 0 ? "text-green-600" : "text-red-600"}>
-                      {asset.gainPercent >= 0 ? "+" : ""}
-                      {asset.gainPercent.toFixed(2)}%
+                    <span className={(asset.gainPercent || 0) >= 0 ? "text-green-600" : "text-red-600"}>
+                      {(asset.gainPercent || 0) >= 0 ? "+" : ""}
+                      {(asset.gainPercent || 0).toFixed(2)}%
                     </span>
                   </TableCell>
                   <TableCell className="text-right">

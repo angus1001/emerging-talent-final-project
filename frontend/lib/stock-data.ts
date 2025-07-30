@@ -36,7 +36,7 @@ export interface MarketStock {
   exchange: string;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:4523/m1/6849797-6564098-default';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://8.153.67.100:3500/api/v1';
 
 /**
  * Fetch all stocks from the API

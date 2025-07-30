@@ -5,9 +5,17 @@ import Chatbot from '@/components/chatbot'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Speed',
+  title: 'SPEED',
   description: 'Created with v0',
   generator: 'v0.dev',
+  icons: {
+    icon: [
+      { url: '/logo.svg', type: 'image/svg+xml' },
+      { url: '/logo.png', type: 'image/png', sizes: '32x32' },
+    ],
+    shortcut: '/logo.svg',
+    apple: '/logo.png',
+  },
 }
 
 export default function RootLayout({
