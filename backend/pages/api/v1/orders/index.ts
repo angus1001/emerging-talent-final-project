@@ -174,7 +174,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
        }
       return res.status(201).json(order);
     } catch (error) {
-      return res.status(400).json({ error: 'Invalid order data' });
+      console.error('Order creation error:', error);
+      return res.status(400).json({ error: 'Invalid order data', details: error.message });
     }
   }
 

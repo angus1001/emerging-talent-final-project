@@ -9,8 +9,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
-import { TrendingUp, TrendingDown, Volume2, DollarSign, ChevronDown, ChevronUp, Heart, HeartOff } from "lucide-react"
+import { TrendingUp, TrendingDown, Volume2, DollarSign, ChevronDown, ChevronUp, Heart, HeartOff, Loader2 } from "lucide-react"
 import { useStock } from "@/hooks/use-stock-data"
+import { useUserData } from "@/hooks/use-user-data"
+import { ordersApi, CreateOrderData } from "@/lib/api"
+import { useToast } from "@/hooks/use-toast"
 import {
   LineChart,
   Line,
@@ -117,6 +120,11 @@ export default function StockDetailModal({
   const [marketInfo, setMarketInfo] = useState<any>({})
   const [showBuyForm, setShowBuyForm] = useState(false)
   const [showSellForm, setShowSellForm] = useState(false)
+  const [isSubmittingOrder, setIsSubmittingOrder] = useState(false)
+  
+  // Get user data for order submission
+  const { user } = useUserData()
+  const { toast } = useToast()
   
   // Get detailed stock data from API if we have a stock ID
   const stockId = stock?.id ? parseInt(stock.id) : null
@@ -179,36 +187,152 @@ export default function StockDetailModal({
     setShowBuyForm(false) // Close buy form if open
   }
 
-  const handleBuySubmit = () => {
-    const orderData = {
-      ...stock,
-      orderDetails: {
-        action: 'buy',
-        quantity: parseInt(buyForm.quantity),
-        price: parseFloat(buyForm.price),
-        orderType: buyForm.orderType,
-        duration: buyForm.duration,
-        totalValue: parseInt(buyForm.quantity) * parseFloat(buyForm.price)
-      }
+  const handleBuySubmit = async () => {
+    if (!user?.id || !stock || !buyForm.quantity || parseFloat(buyForm.quantity) <= 0) {
+      toast({
+        title: "Invalid Order",
+        description: "Please enter a valid quantity and ensure you're logged in.",
+        variant: "destructive",
+      })
+      return
     }
-    onBuy(orderData)
-    onClose()
+
+    setIsSubmittingOrder(true)
+    
+    try {
+      // Get stock_id from the detailedStock (API data) or parse from the frontend stock object
+      let stockIdForOrder = stockId
+      if (!stockIdForOrder && stock.id) {
+        stockIdForOrder = parseInt(stock.id)
+      }
+      
+      if (!stockIdForOrder) {
+        throw new Error('Stock ID not found')
+      }
+
+      const orderData: CreateOrderData = {
+        user_id: parseInt(user.id),
+        stock_id: stockIdForOrder,
+        order_type: 'BUY',
+        quantity: parseInt(buyForm.quantity),
+        price_per_share: parseFloat(buyForm.price),
+        duration: buyForm.duration
+      }
+
+      console.log('Submitting buy order:', orderData) // Debug log
+
+      const result = await ordersApi.createOrder(orderData)
+      
+      toast({
+        title: "Order Submitted",
+        description: `Buy order for ${buyForm.quantity} shares of ${stock.symbol} has been submitted successfully.`,
+      })
+
+      // Call the existing onBuy callback for any additional handling
+      onBuy({
+        ...stock,
+        orderDetails: {
+          action: 'buy',
+          quantity: parseInt(buyForm.quantity),
+          price: parseFloat(buyForm.price),
+          orderType: buyForm.orderType,
+          duration: buyForm.duration,
+          totalValue: parseInt(buyForm.quantity) * parseFloat(buyForm.price),
+          orderId: result.order_id
+        }
+      })
+      
+      onClose()
+    } catch (error) {
+      console.error('Error submitting buy order:', error)
+      
+      let errorMessage = "Failed to submit buy order. Please try again."
+      if (error instanceof Error) {
+        errorMessage = error.message
+      }
+      
+      toast({
+        title: "Order Failed",
+        description: errorMessage,
+        variant: "destructive",
+      })
+    } finally {
+      setIsSubmittingOrder(false)
+    }
   }
 
-  const handleSellSubmit = () => {
-    const orderData = {
-      ...stock,
-      orderDetails: {
-        action: 'sell',
-        quantity: parseInt(sellForm.quantity),
-        price: parseFloat(sellForm.price),
-        orderType: sellForm.orderType,
-        duration: sellForm.duration,
-        totalValue: parseInt(sellForm.quantity) * parseFloat(sellForm.price)
-      }
+  const handleSellSubmit = async () => {
+    if (!user?.id || !stock || !sellForm.quantity || parseFloat(sellForm.quantity) <= 0) {
+      toast({
+        title: "Invalid Order",
+        description: "Please enter a valid quantity and ensure you're logged in.",
+        variant: "destructive",
+      })
+      return
     }
-    onSell(orderData)
-    onClose()
+
+    setIsSubmittingOrder(true)
+    
+    try {
+      // Get stock_id from the detailedStock (API data) or parse from the frontend stock object
+      let stockIdForOrder = stockId
+      if (!stockIdForOrder && stock.id) {
+        stockIdForOrder = parseInt(stock.id)
+      }
+      
+      if (!stockIdForOrder) {
+        throw new Error('Stock ID not found')
+      }
+
+      const orderData: CreateOrderData = {
+        user_id: parseInt(user.id),
+        stock_id: stockIdForOrder,
+        order_type: 'SELL',
+        quantity: parseInt(sellForm.quantity),
+        price_per_share: parseFloat(sellForm.price),
+        duration: sellForm.duration
+      }
+
+      console.log('Submitting sell order:', orderData) // Debug log
+
+      const result = await ordersApi.createOrder(orderData)
+      
+      toast({
+        title: "Order Submitted",
+        description: `Sell order for ${sellForm.quantity} shares of ${stock.symbol} has been submitted successfully.`,
+      })
+
+      // Call the existing onSell callback for any additional handling
+      onSell({
+        ...stock,
+        orderDetails: {
+          action: 'sell',
+          quantity: parseInt(sellForm.quantity),
+          price: parseFloat(sellForm.price),
+          orderType: sellForm.orderType,
+          duration: sellForm.duration,
+          totalValue: parseInt(sellForm.quantity) * parseFloat(sellForm.price),
+          orderId: result.order_id
+        }
+      })
+      
+      onClose()
+    } catch (error) {
+      console.error('Error submitting sell order:', error)
+      
+      let errorMessage = "Failed to submit sell order. Please try again."
+      if (error instanceof Error) {
+        errorMessage = error.message
+      }
+      
+      toast({
+        title: "Order Failed",
+        description: errorMessage,
+        variant: "destructive",
+      })
+    } finally {
+      setIsSubmittingOrder(false)
+    }
   }
 
   const calculateTotal = (quantity: string, price: string) => {
@@ -439,9 +563,16 @@ export default function StockDetailModal({
                       <Button 
                         onClick={handleBuySubmit}
                         className="w-full bg-green-700 hover:bg-green-800"
-                        disabled={!buyForm.quantity || parseFloat(buyForm.quantity) <= 0}
+                        disabled={!buyForm.quantity || parseFloat(buyForm.quantity) <= 0 || isSubmittingOrder}
                       >
-                        Confirm Buy Order
+                        {isSubmittingOrder ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Submitting...
+                          </>
+                        ) : (
+                          'Confirm Buy Order'
+                        )}
                       </Button>
                     </div>
                   )}
@@ -527,9 +658,16 @@ export default function StockDetailModal({
                       <Button 
                         onClick={handleSellSubmit}
                         className="w-full bg-red-600 hover:bg-red-700 text-white"
-                        disabled={!sellForm.quantity || parseFloat(sellForm.quantity) <= 0}
+                        disabled={!sellForm.quantity || parseFloat(sellForm.quantity) <= 0 || isSubmittingOrder}
                       >
-                        Confirm Sell Order
+                        {isSubmittingOrder ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Submitting...
+                          </>
+                        ) : (
+                          'Confirm Sell Order'
+                        )}
                       </Button>
                     </div>
                   )}

@@ -30,12 +30,24 @@ async function apiRequest<T>(
     const response = await fetch(url, config);
     
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new ApiError(
-        response.status,
-        errorData.message || `HTTP Error: ${response.status}`,
-        errorData
-      );
+      let errorMessage = `HTTP Error: ${response.status}`;
+      let errorData: any = {};
+      
+      try {
+        errorData = await response.json();
+        if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+        } else if (typeof errorData === 'string') {
+          errorMessage = errorData;
+        }
+      } catch {
+        // If JSON parsing fails, use status text
+        errorMessage = response.statusText || errorMessage;
+      }
+      
+      throw new ApiError(response.status, errorMessage, errorData);
     }
 
     // Handle 204 No Content responses
@@ -174,6 +186,16 @@ export interface ApiOrder {
   duration: string;
 }
 
+// For creating orders, we only need basic fields
+export interface CreateOrderData {
+  user_id: number;
+  stock_id: number;
+  order_type: 'BUY' | 'SELL';
+  quantity: number;
+  price_per_share: number;
+  duration?: string; // Optional, defaults to 'DAY'
+}
+
 export interface ApiWatchlist {
   watchlist_id: number;
   user_id: number;
@@ -213,7 +235,7 @@ export const portfolioApi = {
 // Orders API functions
 export const ordersApi = {
   // Create a new order
-  createOrder: (orderData: Omit<ApiOrder, 'order_id'>) =>
+  createOrder: (orderData: CreateOrderData) =>
     apiRequest<ApiOrder>('/orders', {
       method: 'POST',
       body: JSON.stringify(orderData),

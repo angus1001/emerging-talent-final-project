@@ -32,6 +32,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       headers.Authorization = req.headers.authorization
     }
 
+    // Add debugging for order requests
+    if (pathString?.includes('orders')) {
+      console.log('Order API Request:', {
+        url: fullUrl,
+        method: req.method,
+        headers,
+        body: req.body
+      })
+    }
+
     const response = await fetch(fullUrl, {
       method: req.method,
       headers,
@@ -39,6 +49,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     })
 
     const data = await response.text()
+    
+    // Add debugging for failed responses
+    if (!response.ok) {
+      console.log('API Error Response:', {
+        status: response.status,
+        statusText: response.statusText,
+        data: data,
+        url: fullUrl
+      })
+    }
     
     // Handle different response types
     if (response.headers.get('content-type')?.includes('application/json')) {

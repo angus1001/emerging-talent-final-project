@@ -33,6 +33,8 @@ import {
 } from "lucide-react"
 import Navigation from "@/components/navigation"
 import StockDetailModal from "@/components/stock-detail-modal"
+import OrderHistory from "@/components/order-history"
+import { Toaster } from "@/components/ui/toaster"
 import { getInitials } from "@/lib/utils"
 
 export default function AccountPage() {
@@ -213,11 +215,15 @@ export default function AccountPage() {
   }
 
   const handleBuy = (orderData: any) => {
-    console.log(`Buy order:`, orderData.orderDetails)
+    console.log(`Buy order submitted:`, orderData.orderDetails)
+    // Order has been successfully submitted via API in the modal
+    // You can add additional logic here if needed, such as refreshing portfolio data
   }
 
   const handleSell = (orderData: any) => {
-    console.log(`Sell order:`, orderData.orderDetails)
+    console.log(`Sell order submitted:`, orderData.orderDetails)
+    // Order has been successfully submitted via API in the modal
+    // You can add additional logic here if needed, such as refreshing portfolio data
   }
 
   return (
@@ -354,7 +360,7 @@ export default function AccountPage() {
           {/* Holdings and Watchlist Tabs */}
           <div className="lg:col-span-2">
             <Tabs defaultValue="holdings" className="space-y-6">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="holdings" className="flex items-center gap-2">
                   <PieChart className="w-4 h-4" />
                   Holdings
@@ -362,6 +368,10 @@ export default function AccountPage() {
                 <TabsTrigger value="watchlist" className="flex items-center gap-2">
                   <Eye className="w-4 h-4" />
                   Watchlist
+                </TabsTrigger>
+                <TabsTrigger value="orders" className="flex items-center gap-2">
+                  <Activity className="w-4 h-4" />
+                  Orders
                 </TabsTrigger>
               </TabsList>
 
@@ -526,6 +536,11 @@ export default function AccountPage() {
                   </CardContent>
                 </Card>
               </TabsContent>
+
+              {/* Orders Tab */}
+              <TabsContent value="orders">
+                <OrderHistory userId={userId} />
+              </TabsContent>
             </Tabs>
           </div>
         </div>
@@ -541,6 +556,9 @@ export default function AccountPage() {
         onWatchlistToggle={handleWatchlistToggle}
         isInWatchlist={selectedStock ? watchlist?.some(item => item.stock.symbol === selectedStock.symbol) || false : false}
       />
+
+      {/* Toast notifications */}
+      <Toaster />
     </div>
   )
 }
