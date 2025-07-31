@@ -120,7 +120,6 @@ async function executeOrder(order: any) {
           stock_id: stock_id,
           holding_number: quantity,
           average_price: price_per_share,
-          cash: 0, // 需要从用户现金中扣除
           total_value: quantity * price_per_share,
           last_updated: new Date(),
         },
@@ -149,7 +148,6 @@ async function executeOrder(order: any) {
           where: { holding_id: existingHolding.holding_id },
           data: {
             holding_number: newQuantity,
-            cash: existingHolding.cash + (quantity * price_per_share),
             total_value: newQuantity * price_per_share,
             last_updated: new Date(),
           },
