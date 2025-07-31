@@ -73,7 +73,6 @@ model Holding {
   stock_id       Int
   holding_number Int
   average_price  Float
-  cash           Int
   total_value    Int
   last_updated   DateTime?
 }

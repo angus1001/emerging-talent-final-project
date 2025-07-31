@@ -1,8 +1,7 @@
 #!/bin/bash
 
 # 查找与next-server相关的进程（排除grep自身）
-echo "正在查找 next-server 进程..."
-pids=$(ps -aux | grep 'next-server' | grep -v 'grep' | awk '{print $2}')
+ 
 
 if [ -z "$pids" ]; then
     echo "未找到 next-server 进程"
