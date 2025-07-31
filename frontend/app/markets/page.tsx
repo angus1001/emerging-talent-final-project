@@ -62,6 +62,24 @@ export default function MarketsPage() {
       changePercent = (change / previousPrice) * 100
     }
     
+    // Format market cap with fewer decimal places
+    const formatMarketCap = (marketCap: string | number) => {
+      const numValue = typeof marketCap === 'string' ? parseFloat(marketCap) : marketCap
+      if (isNaN(numValue)) return '0'
+      
+      if (numValue >= 1e12) {
+        return (numValue / 1e12).toFixed(1) + 'T'
+      } else if (numValue >= 1e9) {
+        return (numValue / 1e9).toFixed(1) + 'B'
+      } else if (numValue >= 1e6) {
+        return (numValue / 1e6).toFixed(1) + 'M'
+      } else if (numValue >= 1e3) {
+        return (numValue / 1e3).toFixed(1) + 'K'
+      } else {
+        return numValue.toFixed(0)
+      }
+    }
+    
     return {
       id: apiStock.stock_id.toString(),
       symbol: apiStock.symbol,
@@ -70,7 +88,7 @@ export default function MarketsPage() {
       change: change,
       changePercent: changePercent,
       volume: apiStock.volume || '0',
-      marketCap: apiStock.market_cap || '0',
+      marketCap: formatMarketCap(apiStock.market_cap || '0'),
       sector: apiStock.sector || 'Unknown',
       description: apiStock.company_info || '',
       exchange: apiStock.exchange || 'Unknown',
