@@ -108,7 +108,6 @@ async function executeOrder(order: any) {
         data: {
           holding_number: newQuantity,
           average_price: newAveragePrice,
-          cash: existingHolding.cash - (quantity * price_per_share),
           total_value: newQuantity * price_per_share,
           last_updated: new Date(),
         },
