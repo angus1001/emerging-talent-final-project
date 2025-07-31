@@ -1,6 +1,6 @@
 # Portfolio Management System
 
-A comprehensive portfolio management application built for the HSBC Emerging Talent Training Program. This project demonstrates modern web development practices with a Next.js frontend and a Next.js + Prisma backend.
+A comprehensive portfolio management application built for the Emerging Talent Training Program. This project demonstrates modern web development practices with a Next.js frontend and a Next.js + Prisma backend.
 
 ## 🚀 Features
 
