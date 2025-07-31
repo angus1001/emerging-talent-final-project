@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { TrendingUp, TrendingDown, Volume2, DollarSign, ChevronDown, ChevronUp, Heart, HeartOff } from "lucide-react"
+import { useStock } from "@/hooks/use-stock-data"
 import {
   LineChart,
   Line,
@@ -29,7 +30,21 @@ interface StockDetailModalProps {
   isInWatchlist?: boolean
 }
 
-// Generate mock historical data for a stock
+// Convert API historical data to chart format
+const convertApiHistoryToChart = (historyPrice: any[]) => {
+  if (!historyPrice || historyPrice.length === 0) return []
+  
+  // Take the last 30 days of data for the chart
+  const recentData = historyPrice.slice(-30)
+  
+  return recentData.map(item => ({
+    date: new Date(item.date).toLocaleDateString(),
+    price: parseFloat(item.close_price.toFixed(2)),
+    volume: Math.floor(Math.random() * 50000000) + 10000000 // Mock volume for now
+  }))
+}
+
+// Generate mock historical data for a stock (fallback when API data not available)
 const generateHistoricalData = (currentPrice: number, symbol: string) => {
   const data = []
   let price = currentPrice * 0.85 // Start 15% lower than current
@@ -103,6 +118,10 @@ export default function StockDetailModal({
   const [showBuyForm, setShowBuyForm] = useState(false)
   const [showSellForm, setShowSellForm] = useState(false)
   
+  // Get detailed stock data from API if we have a stock ID
+  const stockId = stock?.id ? parseInt(stock.id) : null
+  const { stock: detailedStock, loading: stockLoading } = useStock(stockId || 0)
+  
   // Buy form state
   const [buyForm, setBuyForm] = useState({
     quantity: '',
@@ -121,7 +140,14 @@ export default function StockDetailModal({
 
   useEffect(() => {
     if (stock && isOpen) {
-      setHistoricalData(generateHistoricalData(stock.price, stock.symbol))
+      // Use real API historical data if available, otherwise fallback to mock data
+      if (detailedStock?.history_price && detailedStock.history_price.length > 0) {
+        const realHistoricalData = convertApiHistoryToChart(detailedStock.history_price)
+        setHistoricalData(realHistoricalData)
+      } else {
+        setHistoricalData(generateHistoricalData(stock.price, stock.symbol))
+      }
+      
       setMarketInfo(generateMarketInfo(stock))
       // Reset form states when modal opens
       setShowBuyForm(false)
@@ -139,7 +165,7 @@ export default function StockDetailModal({
         duration: 'day'
       })
     }
-  }, [stock, isOpen])
+  }, [stock, isOpen, detailedStock])
 
   if (!stock) return null
 

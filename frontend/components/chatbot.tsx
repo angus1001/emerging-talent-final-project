@@ -57,7 +57,7 @@ export default function Chatbot() {
   useEffect(() => {
     const testConnection = async () => {
       try {
-        const response = await fetch('http://localhost:3080/health', {
+        const response = await fetch('http://47.96.76.43:3080/health', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -97,7 +97,7 @@ export default function Chatbot() {
 
     try {
       // 调用真实的聊天机器人API
-      const response = await fetch('http://localhost:3080', {
+      const response = await fetch('http://47.96.76.43:3080', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

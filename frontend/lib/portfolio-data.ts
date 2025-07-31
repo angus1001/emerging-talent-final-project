@@ -44,23 +44,29 @@ export interface PortfolioSummary {
 }
 
 // Convert API portfolio to frontend format
-export function convertApiPortfolioToSummary(apiPortfolio: ApiPortfolioSummary): PortfolioSummary {
+export function convertApiPortfolioToSummary(
+  apiPortfolio: ApiPortfolioSummary,
+  cashBalance?: number
+): PortfolioSummary {
   const assets: PortfolioAsset[] = [];
 
+  // Use provided cash balance or fall back to API cash_balance
+  const effectiveCashBalance = cashBalance !== undefined ? cashBalance : (apiPortfolio.cash_balance || 0);
+
   // Add cash as an asset
-  if (apiPortfolio.cash_balance > 0) {
+  if (effectiveCashBalance > 0) {
     assets.push({
       id: 'cash',
       name: 'Cash',
       type: 'cash',
       symbol: 'CASH', // Provide a symbol for cash
-      value: apiPortfolio.cash_balance,
-      totalValue: apiPortfolio.cash_balance,
+      value: effectiveCashBalance,
+      totalValue: effectiveCashBalance,
       quantity: 1,
       shares: 1,
-      currentPrice: apiPortfolio.cash_balance,
-      averagePrice: apiPortfolio.cash_balance,
-      purchasePrice: apiPortfolio.cash_balance, // alias for PortfolioInsights component
+      currentPrice: effectiveCashBalance,
+      averagePrice: effectiveCashBalance,
+      purchasePrice: effectiveCashBalance, // alias for PortfolioInsights component
       change: 0,
       gain: 0,
       changePercent: 0,
@@ -101,14 +107,18 @@ export function convertApiPortfolioToSummary(apiPortfolio: ApiPortfolioSummary):
     .filter(asset => asset.change !== undefined)
     .reduce((sum, asset) => sum + (asset.change || 0), 0);
 
+  // Calculate total value if not provided by API
+  const calculatedTotalValue = assets.reduce((sum, asset) => sum + (asset.totalValue || 0), 0);
+  const finalTotalValue = apiPortfolio.total_value || calculatedTotalValue || 0;
+
   const totalChangePercent = calculatePercentageChange(
-    apiPortfolio.total_value,
-    apiPortfolio.total_value - totalChange
+    finalTotalValue,
+    finalTotalValue - totalChange
   );
 
   return {
-    totalValue: apiPortfolio.total_value || 0,
-    cashBalance: apiPortfolio.cash_balance || 0,
+    totalValue: finalTotalValue,
+    cashBalance: effectiveCashBalance,
     stockValue: apiPortfolio.stock_value || 0,
     totalChange: totalChange || 0,
     totalChangePercent: totalChangePercent || 0,

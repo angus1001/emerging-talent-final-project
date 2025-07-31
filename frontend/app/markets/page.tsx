@@ -54,9 +54,10 @@ export default function MarketsPage() {
     let change = 0
     let changePercent = 0
     
+    // Check for history_price data (from API response)
     if (apiStock.history_price && apiStock.history_price.length >= 2) {
       const currentPrice = apiStock.current_price
-      const previousPrice = apiStock.history_price[apiStock.history_price.length - 2].price
+      const previousPrice = apiStock.history_price[apiStock.history_price.length - 2].close_price
       change = currentPrice - previousPrice
       changePercent = (change / previousPrice) * 100
     }

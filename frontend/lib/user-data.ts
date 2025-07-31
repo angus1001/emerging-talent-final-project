@@ -13,6 +13,7 @@ export interface User {
   language?: string;
   first_name: string;
   last_name: string;
+  cash?: number;
 }
 
 // Mock current user ID - in a real app, this would come from authentication
@@ -29,6 +30,7 @@ const transformApiUser = (apiUser: ApiUser): User => {
     phone: apiUser.phone,
     location: apiUser.location,
     language: apiUser.language,
+    cash: apiUser.cash,
     avatar: "/placeholder-user.jpg", // Default avatar
     joinDate: formatDate(apiUser.created_at),
     accountType: "Premium" // Default account type

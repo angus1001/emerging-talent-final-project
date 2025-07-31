@@ -99,6 +99,7 @@ export interface ApiUser {
   created_at: string;
   language?: string;
   location?: string;
+  cash?: number;
 }
 
 export interface CreateUserData {
@@ -144,9 +145,9 @@ export interface ApiHolding {
 }
 
 export interface ApiPortfolioSummary {
-  total_value: number;
+  total_value: number | null;
   cash_balance: number;
-  stock_value: number;
+  stock_value: number | null;
   holdings: ApiHolding[];
   last_updated: string;
 }

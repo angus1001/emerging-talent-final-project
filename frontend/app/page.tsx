@@ -102,7 +102,7 @@ export default function PortfolioManagement() {
   const { portfolio: apiPortfolio, loading: portfolioLoading, error: portfolioError } = usePortfolioSummary(userId)
   
   // Convert API portfolio to frontend format
-  const portfolio = apiPortfolio ? convertApiPortfolioToSummary(apiPortfolio) : null
+  const portfolio = apiPortfolio && user ? convertApiPortfolioToSummary(apiPortfolio, user.cash) : null
 
   // Update portfolio assets with real-time stock prices
   useEffect(() => {
