@@ -101,8 +101,10 @@ export default function PortfolioManagement() {
   const userId = user?.id ? parseInt(user.id) : 1
   const { portfolio: apiPortfolio, loading: portfolioLoading, error: portfolioError } = usePortfolioSummary(userId)
   
-  // Convert API portfolio to frontend format
-  const portfolio = apiPortfolio && user ? convertApiPortfolioToSummary(apiPortfolio, user.cash) : null
+  // Convert API portfolio to frontend format with safe fallback
+  const portfolio = apiPortfolio && user 
+    ? convertApiPortfolioToSummary(apiPortfolio, user.cash) 
+    : null
 
   // Update portfolio assets with real-time stock prices
   useEffect(() => {
@@ -121,16 +123,16 @@ export default function PortfolioManagement() {
   const openStockModal = (asset: any) => {
     // Convert portfolio asset to stock format for the modal
     const stockData = {
-      id: asset.id,
-      symbol: asset.symbol,
-      name: asset.name,
-      price: asset.currentPrice,
-      change: asset.gain / asset.quantity,
-      changePercent: asset.gainPercent,
+      id: asset.id || 'unknown',
+      symbol: asset.symbol || 'N/A',
+      name: asset.name || 'Unknown Asset',
+      price: asset.currentPrice || 0,
+      change: asset.quantity > 0 ? (asset.gain || 0) / asset.quantity : 0,
+      changePercent: asset.gainPercent || 0,
       volume: "N/A", // Portfolio assets don't have volume data
       marketCap: "N/A", // Portfolio assets don't have market cap data
       sector: asset.sector || "Unknown",
-      description: `${asset.name} - Portfolio holding of ${asset.quantity} shares`
+      description: `${asset.name || 'Unknown Asset'} - Portfolio holding of ${asset.quantity || 0} shares`
     }
     setSelectedStock(stockData)
     setIsModalOpen(true)

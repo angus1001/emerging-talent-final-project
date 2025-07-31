@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator"
 import { useUserData } from "@/hooks/use-user-data"
 import { usePortfolioSummary, useUserHoldings, useUserWatchlist } from "@/hooks/use-portfolio-data"
 import { useStocks } from "@/hooks/use-stock-data"
-import { convertApiHoldingsToUserHoldings, formatHoldingValue, formatChange } from "@/lib/portfolio-data"
+import { convertApiHoldingsToUserHoldings, convertApiPortfolioToSummary, formatHoldingValue, formatChange } from "@/lib/portfolio-data"
 import { stockApi, ApiStock } from "@/lib/api"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { 
@@ -61,11 +61,14 @@ export default function AccountPage() {
     let change = 0
     let changePercent = 0
     
-    if (apiStock.history_price && apiStock.history_price.length >= 2) {
+    // Handle missing history_price field gracefully
+    if (apiStock.history_price && Array.isArray(apiStock.history_price) && apiStock.history_price.length >= 2) {
       const currentPrice = apiStock.current_price
-      const previousPrice = apiStock.history_price[apiStock.history_price.length - 2].price
+      // Check if the history_price uses 'price' or 'close_price' field
+      const previousPriceData = apiStock.history_price[apiStock.history_price.length - 2]
+      const previousPrice = previousPriceData.close_price || previousPriceData.price || currentPrice
       change = currentPrice - previousPrice
-      changePercent = (change / previousPrice) * 100
+      changePercent = previousPrice > 0 ? (change / previousPrice) * 100 : 0
     }
     
     return {
@@ -105,19 +108,22 @@ export default function AccountPage() {
     setWatchlistCurrentPage(1)
   }, [watchlist?.length])
   
+  // Convert API portfolio to frontend format to get consistent totalValue calculation
+  const convertedPortfolio = portfolio ? convertApiPortfolioToSummary(portfolio, user?.cash) : null
+  
   // Account information from portfolio API
   const accountInfo = {
     accountNumber: "ACC-789-456-123",
     accountType: "Premium Trading Account",
     openDate: "January 15, 2024",
-    totalPortfolioValue: portfolio?.total_value || 0,
+    totalPortfolioValue: convertedPortfolio?.totalValue || 0,
     totalGain: userHoldings.reduce((sum, holding) => sum + holding.change, 0),
     totalGainPercent: userHoldings.length > 0 
       ? (userHoldings.reduce((sum, holding) => sum + holding.change, 0) / 
          userHoldings.reduce((sum, holding) => sum + (holding.value - holding.change), 0)) * 100
       : 0,
-    availableCash: portfolio?.cash_balance || 0,
-    buyingPower: (portfolio?.cash_balance || 0) * 2 // Assuming 2:1 margin
+    availableCash: convertedPortfolio?.cashBalance || 0,
+    buyingPower: (convertedPortfolio?.cashBalance || 0) * 2 // Assuming 2:1 margin
   }
 
   const handleHomeClick = () => {

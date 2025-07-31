@@ -125,9 +125,10 @@ export interface ApiStock {
   market_cap: string;
   company_info: string;
   in_list: boolean;
-  history_price: Array<{
+  history_price?: Array<{
     date: string;
-    price: number;
+    price?: number;
+    close_price?: number;
   }>;
   added_at?: string;
 }
@@ -146,7 +147,7 @@ export interface ApiHolding {
 
 export interface ApiPortfolioSummary {
   total_value: number | null;
-  cash_balance: number;
+  cash_balance?: number; // Optional since API may not return this
   stock_value: number | null;
   holdings: ApiHolding[];
   last_updated: string;

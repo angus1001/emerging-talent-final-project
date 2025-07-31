@@ -39,19 +39,52 @@ const historicalData = [
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"]
 
 export default function PerformanceCharts({ portfolio }: PerformanceChartsProps) {
-  // Prepare data for pie chart
-  const pieData = portfolio.assets.map((asset: any, index: number) => ({
-    name: asset.symbol,
-    value: asset.totalValue,
-    percentage: ((asset.totalValue / portfolio.totalValue) * 100).toFixed(1),
-  }))
+  // Safely prepare data for pie chart with null checks
+  const pieData = portfolio?.assets?.filter((asset: any) => asset?.totalValue > 0)?.map((asset: any, index: number) => ({
+    name: asset.symbol || 'Unknown',
+    value: asset.totalValue || 0,
+    percentage: portfolio.totalValue > 0 
+      ? (((asset.totalValue || 0) / portfolio.totalValue) * 100).toFixed(1)
+      : '0.0',
+  })) || [];
 
-  // Prepare data for bar chart (asset performance)
-  const barData = portfolio.assets.map((asset: any) => ({
-    name: asset.symbol,
-    gain: asset.gain,
-    gainPercent: asset.gainPercent,
-  }))
+  // Safely prepare data for bar chart (asset performance) with null checks
+  const barData = portfolio?.assets?.map((asset: any) => ({
+    name: asset.symbol || 'Unknown',
+    gain: asset.gain || 0,
+    gainPercent: asset.gainPercent || 0,
+  })) || [];
+
+  // If no portfolio data, show empty state
+  if (!portfolio || !portfolio.assets || portfolio.assets.length === 0) {
+    return (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Portfolio Performance</CardTitle>
+            <CardDescription>No portfolio data available</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+              No data to display
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Asset Allocation</CardTitle>
+            <CardDescription>No assets to display</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[300px] flex items-center justify-center text-muted-foreground">
+              No assets in portfolio
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

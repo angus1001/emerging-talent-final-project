@@ -48,8 +48,12 @@ export default function PortfolioOverview({ portfolio, onStockClick }: Portfolio
     return (
       <div className="space-y-6">
         <Card className="w-full">
+          <CardHeader>
+            <CardTitle>Portfolio Overview</CardTitle>
+            <CardDescription>No portfolio data available</CardDescription>
+          </CardHeader>
           <CardContent className="flex items-center justify-center h-32">
-            <p className="text-muted-foreground">No portfolio data available</p>
+            <p className="text-muted-foreground">Start by adding some assets to your portfolio</p>
           </CardContent>
         </Card>
       </div>
@@ -59,7 +63,7 @@ export default function PortfolioOverview({ portfolio, onStockClick }: Portfolio
   // Calculate asset allocation with safe property access
   const assetAllocation = portfolio?.assets?.reduce((acc: any, asset: any) => {
     const assetValue = asset.totalValue || asset.value || 0;
-    const totalValue = portfolio.totalValue || 1; // Prevent division by zero
+    const totalValue = Math.max(portfolio.totalValue || 0, 1); // Prevent division by zero
     const percentage = (assetValue / totalValue) * 100;
     const assetType = asset.type || 'unknown';
     acc[assetType] = (acc[assetType] || 0) + percentage;
@@ -71,8 +75,10 @@ export default function PortfolioOverview({ portfolio, onStockClick }: Portfolio
     ?.filter((asset: any) => asset.type === "stock")
     ?.reduce((acc: any, asset: any) => {
       const assetValue = asset.totalValue || asset.value || 0;
-      const totalValue = portfolio.totalValue || 1; // Prevent division by zero
-      const percentage = (assetValue / totalValue) * 100;
+      const stocksTotalValue = portfolio?.assets
+        ?.filter((a: any) => a.type === "stock")
+        ?.reduce((sum: number, a: any) => sum + (a.totalValue || a.value || 0), 0) || 1;
+      const percentage = (assetValue / stocksTotalValue) * 100;
       const sector = asset.sector || 'Unknown';
       acc[sector] = (acc[sector] || 0) + percentage;
       return acc;

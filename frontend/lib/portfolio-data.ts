@@ -50,23 +50,25 @@ export function convertApiPortfolioToSummary(
 ): PortfolioSummary {
   const assets: PortfolioAsset[] = [];
 
-  // Use provided cash balance or fall back to API cash_balance
-  const effectiveCashBalance = cashBalance !== undefined ? cashBalance : (apiPortfolio.cash_balance || 0);
+  // Safely handle cash balance with fallbacks
+  const effectiveCashBalance = cashBalance !== undefined 
+    ? cashBalance 
+    : (apiPortfolio.cash_balance || 0);
 
-  // Add cash as an asset
+  // Add cash as an asset if there's any cash balance
   if (effectiveCashBalance > 0) {
     assets.push({
       id: 'cash',
       name: 'Cash',
       type: 'cash',
-      symbol: 'CASH', // Provide a symbol for cash
+      symbol: 'CASH',
       value: effectiveCashBalance,
       totalValue: effectiveCashBalance,
       quantity: 1,
       shares: 1,
       currentPrice: effectiveCashBalance,
       averagePrice: effectiveCashBalance,
-      purchasePrice: effectiveCashBalance, // alias for PortfolioInsights component
+      purchasePrice: effectiveCashBalance,
       change: 0,
       gain: 0,
       changePercent: 0,
@@ -74,42 +76,58 @@ export function convertApiPortfolioToSummary(
     });
   }
 
-  // Convert holdings to assets
-  apiPortfolio.holdings.forEach(holding => {
-    const stock = holding.stock;
-    const currentValue = stock.current_price * holding.holding_number;
-    const costBasis = holding.average_price * holding.holding_number;
-    const change = currentValue - costBasis;
-    const changePercent = calculatePercentageChange(currentValue, costBasis);
+  // Safely convert holdings to assets with proper null checks
+  if (apiPortfolio.holdings && Array.isArray(apiPortfolio.holdings)) {
+    apiPortfolio.holdings.forEach(holding => {
+      if (!holding || !holding.stock) return; // Skip invalid holdings
+      
+      const stock = holding.stock;
+      const currentValue = (stock.current_price || 0) * (holding.holding_number || 0);
+      const costBasis = (holding.average_price || 0) * (holding.holding_number || 0);
+      const change = currentValue - costBasis;
+      const changePercent = calculatePercentageChange(currentValue, costBasis);
 
-    assets.push({
-      id: `stock-${stock.stock_id}`,
-      name: stock.company_name,
-      type: 'stock',
-      symbol: stock.symbol,
-      shares: holding.holding_number,
-      quantity: holding.holding_number, // alias for AssetManagement component
-      currentPrice: stock.current_price,
-      averagePrice: holding.average_price,
-      purchasePrice: holding.average_price, // alias for PortfolioInsights component
-      value: currentValue,
-      totalValue: currentValue, // alias for AssetManagement component
-      change: change,
-      gain: change, // alias for AssetManagement component
-      changePercent: changePercent,
-      gainPercent: changePercent, // alias for AssetManagement component
-      sector: stock.sector,
+      assets.push({
+        id: `stock-${stock.stock_id || holding.holding_id}`,
+        name: stock.company_name || 'Unknown Company',
+        type: 'stock',
+        symbol: stock.symbol || 'N/A',
+        shares: holding.holding_number || 0,
+        quantity: holding.holding_number || 0,
+        currentPrice: stock.current_price || 0,
+        averagePrice: holding.average_price || 0,
+        purchasePrice: holding.average_price || 0,
+        value: currentValue,
+        totalValue: currentValue,
+        change: change,
+        gain: change,
+        changePercent: changePercent,
+        gainPercent: changePercent,
+        sector: stock.sector || 'Unknown',
+      });
     });
-  });
+  }
 
-  // Calculate total change (this would need historical data in real implementation)
+  // Calculate totals with safe fallbacks
   const totalChange = assets
     .filter(asset => asset.change !== undefined)
     .reduce((sum, asset) => sum + (asset.change || 0), 0);
 
-  // Calculate total value if not provided by API
-  const calculatedTotalValue = assets.reduce((sum, asset) => sum + (asset.totalValue || 0), 0);
-  const finalTotalValue = apiPortfolio.total_value || calculatedTotalValue || 0;
+  // Calculate total value if not provided by API or is null
+  const calculatedStockValue = assets
+    .filter(asset => asset.type === 'stock')
+    .reduce((sum, asset) => sum + (asset.totalValue || 0), 0);
+  
+  const calculatedTotalValue = calculatedStockValue + effectiveCashBalance;
+  
+  // Handle null total_value from API
+  const finalTotalValue = (apiPortfolio.total_value !== null && apiPortfolio.total_value !== undefined) 
+    ? apiPortfolio.total_value 
+    : calculatedTotalValue;
+
+  const finalStockValue = (apiPortfolio.stock_value !== null && apiPortfolio.stock_value !== undefined)
+    ? apiPortfolio.stock_value
+    : calculatedStockValue;
 
   const totalChangePercent = calculatePercentageChange(
     finalTotalValue,
@@ -117,17 +135,17 @@ export function convertApiPortfolioToSummary(
   );
 
   return {
-    totalValue: finalTotalValue,
+    totalValue: finalTotalValue || 0,
     cashBalance: effectiveCashBalance,
-    stockValue: apiPortfolio.stock_value || 0,
+    stockValue: finalStockValue || 0,
     totalChange: totalChange || 0,
     totalChangePercent: totalChangePercent || 0,
-    totalGain: totalChange || 0, // alias for totalChange
-    totalGainPercent: totalChangePercent || 0, // alias for totalChangePercent
-    dayChange: totalChange || 0, // For now, same as totalChange (would need historical data for real day change)
-    dayChangePercent: totalChangePercent || 0, // For now, same as totalChangePercent
+    totalGain: totalChange || 0,
+    totalGainPercent: totalChangePercent || 0,
+    dayChange: totalChange || 0,
+    dayChangePercent: totalChangePercent || 0,
     assets,
-    lastUpdated: apiPortfolio.last_updated,
+    lastUpdated: apiPortfolio.last_updated || new Date().toISOString(),
   };
 }
 
