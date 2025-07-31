@@ -107,15 +107,15 @@ export function convertApiPortfolioToSummary(apiPortfolio: ApiPortfolioSummary):
   );
 
   return {
-    totalValue: apiPortfolio.total_value,
-    cashBalance: apiPortfolio.cash_balance,
-    stockValue: apiPortfolio.stock_value,
-    totalChange,
-    totalChangePercent,
-    totalGain: totalChange, // alias for totalChange
-    totalGainPercent: totalChangePercent, // alias for totalChangePercent
-    dayChange: totalChange, // For now, same as totalChange (would need historical data for real day change)
-    dayChangePercent: totalChangePercent, // For now, same as totalChangePercent
+    totalValue: apiPortfolio.total_value || 0,
+    cashBalance: apiPortfolio.cash_balance || 0,
+    stockValue: apiPortfolio.stock_value || 0,
+    totalChange: totalChange || 0,
+    totalChangePercent: totalChangePercent || 0,
+    totalGain: totalChange || 0, // alias for totalChange
+    totalGainPercent: totalChangePercent || 0, // alias for totalChangePercent
+    dayChange: totalChange || 0, // For now, same as totalChange (would need historical data for real day change)
+    dayChangePercent: totalChangePercent || 0, // For now, same as totalChangePercent
     assets,
     lastUpdated: apiPortfolio.last_updated,
   };

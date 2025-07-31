@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
 import { useUserData } from "@/hooks/use-user-data"
 import { usePortfolioSummary, useUserHoldings, useUserWatchlist } from "@/hooks/use-portfolio-data"
+import { useStocks } from "@/hooks/use-stock-data"
 import { convertApiHoldingsToUserHoldings, formatHoldingValue, formatChange } from "@/lib/portfolio-data"
 import { stockApi, ApiStock } from "@/lib/api"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -43,34 +44,13 @@ export default function AccountPage() {
   const { holdings, loading: holdingsLoading, error: holdingsError } = useUserHoldings(userId)
   const { watchlist, loading: watchlistLoading, error: watchlistError, addToWatchlist, removeFromWatchlist } = useUserWatchlist(userId)
   
-  // State for stocks data
-  const [stocksData, setStocksData] = useState<ApiStock[]>([])
-  const [stocksLoading, setStocksLoading] = useState(true)
-  const [stocksError, setStocksError] = useState<string | null>(null)
+  // Stocks data hooks
+  const { stocks: stocksData, loading: stocksLoading, error: stocksError } = useStocks()
   
   const [selectedStock, setSelectedStock] = useState<any>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [watchlistCurrentPage, setWatchlistCurrentPage] = useState(1)
   const watchlistItemsPerPage = 5
-
-  // Fetch all stocks data
-  useEffect(() => {
-    const fetchStocks = async () => {
-      try {
-        setStocksLoading(true)
-        setStocksError(null)
-        const stocks = await stockApi.getAllStocks()
-        setStocksData(stocks)
-      } catch (error) {
-        setStocksError(error instanceof Error ? error.message : 'Failed to fetch stocks')
-        console.error('Error fetching stocks:', error)
-      } finally {
-        setStocksLoading(false)
-      }
-    }
-
-    fetchStocks()
-  }, [])
   
   // Convert API holdings to frontend format
   const userHoldings = holdings ? convertApiHoldingsToUserHoldings(holdings) : []

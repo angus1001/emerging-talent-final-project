@@ -96,7 +96,7 @@ export default function PortfolioManagement() {
   const [selectedStock, setSelectedStock] = useState<any>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const { user, loading: userLoading, error: userError } = useUserData()
-  const { marketStocks, loading: stocksLoading, error: stocksError } = useStocks()
+  const { stocks, loading: stocksLoading, error: stocksError } = useStocks()
   
   const userId = user?.id ? parseInt(user.id) : 1
   const { portfolio: apiPortfolio, loading: portfolioLoading, error: portfolioError } = usePortfolioSummary(userId)
@@ -106,11 +106,11 @@ export default function PortfolioManagement() {
 
   // Update portfolio assets with real-time stock prices
   useEffect(() => {
-    if (marketStocks.length > 0 && portfolio) {
+    if (stocks.length > 0 && portfolio) {
       // Update stock prices in real-time if needed
       // This is handled automatically by the portfolio hook
     }
-  }, [marketStocks, portfolio])
+  }, [stocks, portfolio])
 
   const handleRemoveAsset = (assetId: string) => {
     // This would need to call the API to actually remove/sell the asset
@@ -225,9 +225,9 @@ export default function PortfolioManagement() {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${portfolio.totalValue.toLocaleString()}</div>
+              <div className="text-2xl font-bold">${(portfolio?.totalValue || 0).toLocaleString()}</div>
               <div className="flex items-center text-xs text-muted-foreground">
-                <TrendingUp className="w-3 h-3 mr-1" />+{portfolio.dayChangePercent}% today
+                <TrendingUp className="w-3 h-3 mr-1" />+{(portfolio?.dayChangePercent || 0).toFixed(2)}% today
               </div>
             </CardContent>
           </Card>
@@ -238,8 +238,8 @@ export default function PortfolioManagement() {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">+${portfolio.totalGain.toLocaleString()}</div>
-              <div className="text-xs text-muted-foreground">+{portfolio.totalGainPercent.toFixed(2)}% overall</div>
+              <div className="text-2xl font-bold text-green-600">+${(portfolio?.totalGain || 0).toLocaleString()}</div>
+              <div className="text-xs text-muted-foreground">+{(portfolio?.totalGainPercent || 0).toFixed(2)}% overall</div>
             </CardContent>
           </Card>
 
@@ -249,8 +249,8 @@ export default function PortfolioManagement() {
               <BarChart3 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">+${portfolio.dayChange.toLocaleString()}</div>
-              <div className="text-xs text-muted-foreground">+{portfolio.dayChangePercent}% from yesterday</div>
+              <div className="text-2xl font-bold text-green-600">+${(portfolio?.dayChange || 0).toLocaleString()}</div>
+              <div className="text-xs text-muted-foreground">+{(portfolio?.dayChangePercent || 0).toFixed(2)}% from yesterday</div>
             </CardContent>
           </Card>
 
@@ -260,7 +260,7 @@ export default function PortfolioManagement() {
               <PieChart className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{portfolio.assets.length}</div>
+              <div className="text-2xl font-bold">{portfolio?.assets?.length || 0}</div>
               <div className="text-xs text-muted-foreground">Across stocks, bonds, and cash</div>
             </CardContent>
           </Card>
@@ -334,7 +334,7 @@ export default function PortfolioManagement() {
               </TabsContent>
 
               <TabsContent value="manage">
-                <AssetManagement assets={portfolio.assets} onRemoveAsset={handleRemoveAsset} />
+                <AssetManagement assets={portfolio?.assets || []} onRemoveAsset={handleRemoveAsset} />
               </TabsContent>
             </Tabs>
           </div>

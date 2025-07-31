@@ -32,7 +32,7 @@ const getSectorBadgeColor = (sector: string) => {
 
 export default function MarketsPage() {
   const { user, loading: userLoading } = useUserData()
-  const { marketStocks, loading: stocksLoading, error: stocksError } = useStocks()
+  const { stocks: stocksData, loading: stocksLoading, error: stocksError } = useStocks()
   const userId = user?.id ? parseInt(user.id) : 1 // Default to user ID 1 for demo
   const { watchlist, loading: watchlistLoading, addToWatchlist, removeFromWatchlist } = useUserWatchlist(userId)
   const [selectedStock, setSelectedStock] = useState<any>(null)
@@ -47,6 +47,37 @@ export default function MarketsPage() {
   const handleHomeClick = () => {
     window.location.href = "/"
   }
+
+  // Convert API stocks to market format
+  const convertApiStockToMarket = (apiStock: any) => {
+    // Calculate change and changePercent from history_price if available
+    let change = 0
+    let changePercent = 0
+    
+    if (apiStock.history_price && apiStock.history_price.length >= 2) {
+      const currentPrice = apiStock.current_price
+      const previousPrice = apiStock.history_price[apiStock.history_price.length - 2].price
+      change = currentPrice - previousPrice
+      changePercent = (change / previousPrice) * 100
+    }
+    
+    return {
+      id: apiStock.stock_id.toString(),
+      symbol: apiStock.symbol,
+      name: apiStock.company_name,
+      price: apiStock.current_price,
+      change: change,
+      changePercent: changePercent,
+      volume: apiStock.volume || '0',
+      marketCap: apiStock.market_cap || '0',
+      sector: apiStock.sector || 'Unknown',
+      description: apiStock.company_info || '',
+      exchange: apiStock.exchange || 'Unknown',
+    }
+  }
+
+  // Convert stocks data to market format
+  const marketStocks = stocksData.map(convertApiStockToMarket)
 
   const handleProfileClick = () => {
     window.location.href = "/profile"
