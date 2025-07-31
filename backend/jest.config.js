@@ -11,7 +11,7 @@ module.exports = {
     '!pages/api/**/*.d.ts',
   ],
   setupFilesAfterEnv: ['<rootDir>/__tests__/setup.ts'],
-  moduleNameMapping: {
+  moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/$1',
   },
 }; 

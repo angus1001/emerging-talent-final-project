@@ -34,8 +34,8 @@ describe('/api/v1/users', () => {
   });
 
   beforeEach(async () => {
-    // 每个测试前清理用户数据
-    await prisma.user.deleteMany();
+    // 每个测试前清理所有数据
+    await setupTestDB();
   });
 
   describe('GET /api/v1/users', () => {
