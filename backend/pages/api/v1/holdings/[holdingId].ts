@@ -49,21 +49,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // 计算卖出价值
       const sellValue = holding.holding_number * holding.stock.current_price;
       
-      // 找到用户的现金持仓记录并更新
-      const userCashHolding = await prisma.holding.findFirst({
+      // 更新用户的现金余额
+      await prisma.user.update({
         where: { user_id: holding.user_id },
-      });
-
-      if (userCashHolding) {
-        await prisma.holding.update({
-          where: { holding_id: userCashHolding.holding_id },
-          data: {
-            cash: {
-              increment: sellValue,
-            },
+        data: {
+          cash: {
+            increment: sellValue,
           },
-        });
-      }
+        },
+      });
 
       // 删除持仓
       await prisma.holding.delete({
