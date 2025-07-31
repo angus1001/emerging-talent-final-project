@@ -33,12 +33,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       // 计算总价值
       let totalStockValue = 0;
-      let cashBalance = 0;
+      let cashBalance = user.cash;
 
       holdings.forEach(holding => {
         const currentValue = holding.holding_number * holding.stock.current_price;
         totalStockValue += currentValue;
-        cashBalance = holding.cash;
       });
 
       const totalValue = totalStockValue + cashBalance;

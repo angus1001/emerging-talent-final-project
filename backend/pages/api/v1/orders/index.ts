@@ -135,7 +135,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             }
           });
 
-          const newTotalValue = quantity * price_per_share;
+          const newTotalValue = Math.round(parseInt(quantity) * parseFloat(price_per_share));
 
           if (!holding) {
             // 如果没有持仓，创建新持仓
@@ -143,9 +143,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               data: {
                 user_id: user.user_id,
                 stock_id: stock.stock_id,
-                holding_number: quantity,
-                average_price: price_per_share,
-                cash: newTotalValue, // 持仓的现金价值
+                holding_number: parseInt(quantity),
+                average_price: parseFloat(price_per_share),
                 total_value: newTotalValue,
                 last_updated: new Date()
               }
@@ -154,17 +153,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             // 已有持仓，更新持仓数量和平均买入价格
             const oldTotalShares = holding.holding_number;
             const oldAvgPrice = holding.average_price;
-            const newTotalShares = oldTotalShares + quantity;
+            const newTotalShares = oldTotalShares + parseInt(quantity);
             // 重新计算加权平均买入价格
-            const newAvgPrice = ((oldTotalShares * oldAvgPrice) + (quantity * price_per_share)) / newTotalShares;
-            const updatedTotalValue = newTotalShares * newAvgPrice;
+            const newAvgPrice = ((oldTotalShares * oldAvgPrice) + (parseInt(quantity) * parseFloat(price_per_share))) / newTotalShares;
+            const updatedTotalValue = Math.round(newTotalShares * newAvgPrice);
 
             await tx.holding.update({
               where: { holding_id: holding.holding_id },
               data: {
                 holding_number: newTotalShares,
                 average_price: newAvgPrice,
-                cash: updatedTotalValue, // 持仓的现金价值
                 total_value: updatedTotalValue,
                 last_updated: new Date()
               }
