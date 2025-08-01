@@ -33,37 +33,130 @@ interface StockDetailModalProps {
   isInWatchlist?: boolean
 }
 
-// Convert API historical data to chart format
-const convertApiHistoryToChart = (historyPrice: any[]) => {
+// Convert API historical data to chart format with time period filtering
+const convertApiHistoryToChart = (historyPrice: any[], timePeriod: string = '1M', stockVolume?: string) => {
   if (!historyPrice || historyPrice.length === 0) return []
   
-  // Take the last 30 days of data for the chart
-  const recentData = historyPrice.slice(-30)
+  // Calculate how many days to show based on time period
+  let daysToShow = 30
+  switch (timePeriod) {
+    case '1M':
+      daysToShow = 30
+      break
+    case '3M':
+      daysToShow = 90
+      break
+    case '6M':
+      daysToShow = 180
+      break
+    case '1Y':
+      daysToShow = 365
+      break
+    default:
+      daysToShow = 30
+  }
   
-  return recentData.map(item => ({
-    date: new Date(item.date).toLocaleDateString(),
-    price: parseFloat(item.close_price.toFixed(2)),
-    volume: Math.floor(Math.random() * 50000000) + 10000000 // Mock volume for now
-  }))
+  // Take the data for the specified time period
+  const recentData = historyPrice.slice(-daysToShow)
+  
+  // Parse stock volume if available, otherwise use a reasonable default
+  let baseVolume = 25000000 // Default 25M volume
+  if (stockVolume) {
+    // Try to parse volume string (could be like "1.2M", "500K", etc.)
+    const volumeStr = stockVolume.toLowerCase()
+    if (volumeStr.includes('m')) {
+      baseVolume = parseFloat(volumeStr.replace('m', '')) * 1000000
+    } else if (volumeStr.includes('k')) {
+      baseVolume = parseFloat(volumeStr.replace('k', '')) * 1000
+    } else if (volumeStr.includes('b')) {
+      baseVolume = parseFloat(volumeStr.replace('b', '')) * 1000000000
+    } else {
+      baseVolume = parseFloat(volumeStr) || 25000000
+    }
+  }
+  
+  return recentData.map((item, index) => {
+    const price = parseFloat(item.close_price.toFixed(2))
+    
+    // Calculate volume based on price volatility
+    let volumeMultiplier = 1.0
+    if (index > 0) {
+      const prevPrice = parseFloat(recentData[index - 1].close_price.toFixed(2))
+      const priceChangePercent = Math.abs((price - prevPrice) / prevPrice)
+      // Higher price volatility = higher volume (up to 2x normal volume)
+      volumeMultiplier = 0.7 + Math.min(priceChangePercent * 10, 1.3)
+    } else {
+      // First day gets random multiplier
+      volumeMultiplier = 0.8 + Math.random() * 0.4
+    }
+    
+    return {
+      date: new Date(item.date).toLocaleDateString(),
+      price: price,
+      // Estimate volume based on current stock volume with volatility-based variation
+      volume: Math.floor(baseVolume * volumeMultiplier)
+    }
+  })
 }
 
 // Generate mock historical data for a stock (fallback when API data not available)
-const generateHistoricalData = (currentPrice: number, symbol: string) => {
+const generateHistoricalData = (currentPrice: number, symbol: string, timePeriod: string = '1M', stockVolume?: string) => {
   const data = []
   let price = currentPrice * 0.85 // Start 15% lower than current
   
-  for (let i = 30; i >= 0; i--) {
+  // Calculate how many days to generate based on time period
+  let daysToGenerate = 30
+  switch (timePeriod) {
+    case '1M':
+      daysToGenerate = 30
+      break
+    case '3M':
+      daysToGenerate = 90
+      break
+    case '6M':
+      daysToGenerate = 180
+      break
+    case '1Y':
+      daysToGenerate = 365
+      break
+    default:
+      daysToGenerate = 30
+  }
+  
+  // Parse stock volume if available, otherwise use a reasonable default
+  let baseVolume = 25000000 // Default 25M volume
+  if (stockVolume) {
+    // Try to parse volume string (could be like "1.2M", "500K", etc.)
+    const volumeStr = stockVolume.toLowerCase()
+    if (volumeStr.includes('m')) {
+      baseVolume = parseFloat(volumeStr.replace('m', '')) * 1000000
+    } else if (volumeStr.includes('k')) {
+      baseVolume = parseFloat(volumeStr.replace('k', '')) * 1000
+    } else if (volumeStr.includes('b')) {
+      baseVolume = parseFloat(volumeStr.replace('b', '')) * 1000000000
+    } else {
+      baseVolume = parseFloat(volumeStr) || 25000000
+    }
+  }
+  
+  for (let i = daysToGenerate; i >= 0; i--) {
     const date = new Date()
     date.setDate(date.getDate() - i)
     
     // Add some randomness to price movement
+    const previousPrice = price
     const change = (Math.random() - 0.5) * 0.05 * price // ±5% random change
     price = Math.max(price + change, currentPrice * 0.5) // Don't go below 50% of current
+    
+    // Calculate volume based on price change magnitude
+    const priceChangePercent = Math.abs((price - previousPrice) / previousPrice)
+    const volumeMultiplier = 0.7 + Math.min(priceChangePercent * 10, 1.3)
     
     data.push({
       date: date.toISOString().split('T')[0],
       price: parseFloat(price.toFixed(2)),
-      volume: Math.floor(Math.random() * 50000000) + 10000000 // 10M-60M volume
+      // Use base volume with volatility-based variation
+      volume: Math.floor(baseVolume * volumeMultiplier)
     })
   }
   
@@ -87,6 +180,24 @@ const generateMarketInfo = (stock: any) => {
     sector: stock.sector,
     description: stock.description,
     exchange: stock.exchange
+  }
+}
+
+// Format date for chart based on time period
+const formatChartDate = (dateString: string, timePeriod: string) => {
+  const date = new Date(dateString)
+  
+  switch (timePeriod) {
+    case '1M':
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    case '3M':
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    case '6M':
+      return date.toLocaleDateString('en-US', { month: 'short' })
+    case '1Y':
+      return date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
+    default:
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
   }
 }
 
@@ -121,6 +232,7 @@ export default function StockDetailModal({
   const [showBuyForm, setShowBuyForm] = useState(false)
   const [showSellForm, setShowSellForm] = useState(false)
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false)
+  const [timePeriod, setTimePeriod] = useState('1M')
   
   // Get user data for order submission
   const { user } = useUserData()
@@ -150,10 +262,19 @@ export default function StockDetailModal({
     if (stock && isOpen) {
       // Use real API historical data if available, otherwise fallback to mock data
       if (detailedStock?.history_price && detailedStock.history_price.length > 0) {
-        const realHistoricalData = convertApiHistoryToChart(detailedStock.history_price)
+        const realHistoricalData = convertApiHistoryToChart(
+          detailedStock.history_price, 
+          timePeriod, 
+          detailedStock.volume
+        )
         setHistoricalData(realHistoricalData)
       } else {
-        setHistoricalData(generateHistoricalData(stock.price, stock.symbol))
+        setHistoricalData(generateHistoricalData(
+          stock.price, 
+          stock.symbol, 
+          timePeriod, 
+          stock.volume
+        ))
       }
       
       setMarketInfo(generateMarketInfo(stock))
@@ -173,7 +294,7 @@ export default function StockDetailModal({
         duration: 'day'
       })
     }
-  }, [stock, isOpen, detailedStock])
+  }, [stock, isOpen, detailedStock, timePeriod])
 
   if (!stock) return null
 
@@ -388,8 +509,25 @@ export default function StockDetailModal({
             {/* Price History Chart */}
             <Card>
               <CardHeader>
-                <CardTitle>30-Day Price History</CardTitle>
-                <CardDescription>Historical closing prices</CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>Price History</CardTitle>
+                    <CardDescription>Historical closing prices</CardDescription>
+                  </div>
+                  <div className="flex gap-2">
+                    {['1M', '3M', '6M', '1Y'].map((period) => (
+                      <Button
+                        key={period}
+                        variant={timePeriod === period ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setTimePeriod(period)}
+                        className="text-xs px-3 py-1"
+                      >
+                        {period}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
                 <ChartContainer
@@ -406,7 +544,7 @@ export default function StockDetailModal({
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis 
                         dataKey="date" 
-                        tickFormatter={(value) => new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        tickFormatter={(value) => formatChartDate(value, timePeriod)}
                       />
                       <YAxis 
                         domain={['dataMin - 5', 'dataMax + 5']}
@@ -430,7 +568,7 @@ export default function StockDetailModal({
                                   Price: ${data.price}
                                 </p>
                                 <p className="text-sm text-muted-foreground">
-                                  Volume: {data.volume.toLocaleString()}
+                                  Volume: ~{data.volume.toLocaleString()} (est.)
                                 </p>
                               </div>
                             )
@@ -449,6 +587,71 @@ export default function StockDetailModal({
                     </LineChart>
                   </ResponsiveContainer>
                 </ChartContainer>
+              </CardContent>
+            </Card>
+            {/* Market Statistics - Show all provided data */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Market Statistics</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-gray-600">Symbol</p>
+                    <p className="font-semibold">{marketInfo.symbol}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Exchange</p>
+                    <p className="font-semibold">{marketInfo.exchange}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Current Price</p>
+                    <p className="font-semibold">${marketInfo.price}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Price Change</p>
+                    <p className={`font-semibold ${marketInfo.change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {marketInfo.change >= 0 ? '+' : ''}{marketInfo.change}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Change %</p>
+                    <p className={`font-semibold ${marketInfo.changePercent >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {marketInfo.changePercent >= 0 ? '+' : ''}{marketInfo.changePercent}%
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Volume (Current)</p>
+                    <p className="font-semibold">{marketInfo.volume}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Market Cap</p>
+                    <p className="font-semibold">{marketInfo.marketCap}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Sector</p>
+                    <p className="font-semibold">{marketInfo.sector}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Company Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Company Information</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div>
+                    <p className="text-sm text-gray-600">Company Name</p>
+                    <p className="font-semibold">{marketInfo.name}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Description</p>
+                    <p className="text-sm text-gray-700">{marketInfo.description}</p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -675,71 +878,7 @@ export default function StockDetailModal({
               </CardContent>
             </Card>
 
-            {/* Market Statistics - Show all provided data */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Market Statistics</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-gray-600">Symbol</p>
-                    <p className="font-semibold">{marketInfo.symbol}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Exchange</p>
-                    <p className="font-semibold">{marketInfo.exchange}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Current Price</p>
-                    <p className="font-semibold">${marketInfo.price}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Price Change</p>
-                    <p className={`font-semibold ${marketInfo.change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {marketInfo.change >= 0 ? '+' : ''}{marketInfo.change}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Change %</p>
-                    <p className={`font-semibold ${marketInfo.changePercent >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {marketInfo.changePercent >= 0 ? '+' : ''}{marketInfo.changePercent}%
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Volume</p>
-                    <p className="font-semibold">{marketInfo.volume}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Market Cap</p>
-                    <p className="font-semibold">{marketInfo.marketCap}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Sector</p>
-                    <p className="font-semibold">{marketInfo.sector}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Company Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Company Information</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div>
-                    <p className="text-sm text-gray-600">Company Name</p>
-                    <p className="font-semibold">{marketInfo.name}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Description</p>
-                    <p className="text-sm text-gray-700">{marketInfo.description}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            
           </div>
         </div>
       </DialogContent>

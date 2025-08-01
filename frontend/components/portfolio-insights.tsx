@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Clock, ExternalLink, TrendingUp, TrendingDown, Zap } from "lucide-react"
+import { Clock, ExternalLink, TrendingUp, TrendingDown, Zap, PieChart, AlertTriangle, Target } from "lucide-react"
 
 interface NewsItem {
   id: string
@@ -42,46 +42,138 @@ interface InsightsProps {
 
 // Mock news data - in a real app, this would come from a news API
 const mockNews: NewsItem[] = [
+  // Portfolio-related news
   {
     id: "1",
-    title: "Federal Reserve Signals Potential Rate Cut in Q2 2025",
-    summary: "Fed Chair Jerome Powell hints at monetary policy easing amid cooling inflation data, potentially boosting equity markets.",
-    source: "Financial Times",
-    publishedAt: "2025-07-28T08:30:00Z",
-    category: "economy",
+    title: "Apple Reports Strong Q3 Earnings Driven by AI Services",
+    summary: "Apple's AI-powered services segment shows remarkable growth, with revenue up 23% year-over-year, exceeding analyst expectations. iPhone sales also beat forecasts.",
+    source: "Reuters",
+    publishedAt: "2025-08-01T07:15:00Z",
+    category: "stock",
     sentiment: "positive",
     url: "#"
   },
   {
     id: "2",
-    title: "Apple Reports Strong Q3 Earnings Driven by AI Services",
-    summary: "Apple's AI-powered services segment shows remarkable growth, with revenue up 23% year-over-year, exceeding analyst expectations.",
-    source: "Reuters",
-    publishedAt: "2025-07-28T07:15:00Z",
-    category: "stock",
-    sentiment: "positive",
-    url: "#"
-  },
-  {
-    id: "3",
     title: "Tesla Faces Production Challenges in European Markets",
-    summary: "Tesla reports slower-than-expected production ramp-up in its European facilities, citing supply chain constraints.",
+    summary: "Tesla reports slower-than-expected production ramp-up in its European facilities, citing supply chain constraints and regulatory delays affecting Q4 delivery targets.",
     source: "Bloomberg",
-    publishedAt: "2025-07-28T06:45:00Z",
+    publishedAt: "2025-08-01T06:45:00Z",
     category: "stock",
     sentiment: "negative",
     url: "#"
   },
   {
+    id: "3",
+    title: "Google Alphabet Announces Major AI Infrastructure Investment",
+    summary: "Alphabet commits $50 billion to AI data center expansion, positioning the company for next-generation cloud services and AI model training capabilities.",
+    source: "TechCrunch",
+    publishedAt: "2025-08-01T05:30:00Z",
+    category: "stock",
+    sentiment: "positive",
+    url: "#"
+  },
+  {
     id: "4",
-    title: "Tech Sector Rally Continues as AI Stocks Surge",
-    summary: "Major technology stocks continue their upward trajectory as investors remain optimistic about AI sector growth prospects.",
+    title: "US Treasury 10-Year Bond Yields Drop to 3-Month Low",
+    summary: "Treasury bond prices surge as investors seek safe haven assets amid market volatility, with 10-year yields falling below 4% for first time since May.",
+    source: "Wall Street Journal",
+    publishedAt: "2025-08-01T04:20:00Z",
+    category: "economy",
+    sentiment: "positive",
+    url: "#"
+  },
+  {
+    id: "5",
+    title: "Technology Sector Outperforms Amid AI Optimism",
+    summary: "Tech stocks lead market gains as artificial intelligence continues to drive investor enthusiasm, with sector up 12% over past month.",
     source: "CNBC",
-    publishedAt: "2025-07-28T05:20:00Z",
+    publishedAt: "2025-08-01T03:45:00Z",
     category: "tech",
     sentiment: "positive",
     url: "#"
   },
+  {
+    id: "9",
+    title: "Microsoft Azure Cloud Revenue Jumps 35% in Q3",
+    summary: "Microsoft reports exceptional cloud growth driven by AI and enterprise digital transformation, with Azure becoming the primary growth engine for the company.",
+    source: "TechCrunch",
+    publishedAt: "2025-08-01T03:20:00Z",
+    category: "stock",
+    sentiment: "positive",
+    url: "#"
+  },
+  {
+    id: "10",
+    title: "Apple iPhone 16 Pre-Orders Exceed Expectations",
+    summary: "New iPhone featuring advanced AI capabilities sees record pre-order numbers, signaling strong consumer demand for AI-powered devices.",
+    source: "Wall Street Journal",
+    publishedAt: "2025-08-01T02:55:00Z",
+    category: "stock",
+    sentiment: "positive",
+    url: "#"
+  },
+  {
+    id: "11",
+    title: "Tesla Stock Volatile on Autopilot Regulatory Review",
+    summary: "Tesla shares fluctuate as NHTSA announces comprehensive review of Full Self-Driving technology, raising questions about autonomous vehicle timeline.",
+    source: "Reuters",
+    publishedAt: "2025-08-01T02:30:00Z",
+    category: "stock",
+    sentiment: "negative",
+    url: "#"
+  },
+  {
+    id: "12",
+    title: "Google Search Ad Revenue Shows Strong Recovery",
+    summary: "Alphabet's search advertising business rebounds with 15% growth, driven by improved AI-powered ad targeting and increased digital marketing spend.",
+    source: "Bloomberg",
+    publishedAt: "2025-08-01T02:10:00Z",
+    category: "stock",
+    sentiment: "positive",
+    url: "#"
+  },
+  {
+    id: "13",
+    title: "US Treasury Bonds Rally on Safe Haven Demand",
+    summary: "Government bonds gain as global uncertainty drives investors toward safe assets, with 10-year Treasury yields dropping to multi-month lows.",
+    source: "Financial Times",
+    publishedAt: "2025-08-01T01:45:00Z",
+    category: "economy",
+    sentiment: "positive",
+    url: "#"
+  },
+  // General market news
+  {
+    id: "6",
+    title: "Federal Reserve Signals Potential Rate Cut in Q4 2025",
+    summary: "Fed Chair Jerome Powell hints at monetary policy easing amid cooling inflation data, potentially boosting equity markets across all sectors.",
+    source: "Financial Times",
+    publishedAt: "2025-08-01T08:30:00Z",
+    category: "economy",
+    sentiment: "positive",
+    url: "#"
+  },
+  {
+    id: "7",
+    title: "Global Supply Chain Disruptions Impact Multiple Industries",
+    summary: "Ongoing supply chain challenges affect manufacturing and technology sectors, with companies warning of potential delays through Q4 2025.",
+    source: "Reuters",
+    publishedAt: "2025-08-01T02:15:00Z",
+    category: "market",
+    sentiment: "negative",
+    url: "#"
+  },
+  {
+    id: "8",
+    title: "Emerging Markets Show Strong Performance",
+    summary: "Developing market equities outperform developed markets as dollar weakness and improving economic fundamentals attract investor capital.",
+    source: "Bloomberg",
+    publishedAt: "2025-08-01T01:30:00Z",
+    category: "market",
+    sentiment: "positive",
+    url: "#"
+  }
 ]
 
 export default function PortfolioInsights({ portfolio }: InsightsProps) {
@@ -149,6 +241,57 @@ export default function PortfolioInsights({ portfolio }: InsightsProps) {
 
   const generalNews = mockNews.filter(news => !relevantNews.includes(news))
 
+  // Portfolio analysis insights
+  const getPortfolioInsights = () => {
+    const insights = []
+    
+    // Sector concentration analysis
+    const sectors = portfolio.assets.reduce((acc, asset) => {
+      const sector = asset.sector || 'Other'
+      acc[sector] = (acc[sector] || 0) + asset.totalValue
+      return acc
+    }, {} as Record<string, number>)
+    
+    const totalValue = portfolio.totalValue
+    const sectorWithHighestAllocation = Object.entries(sectors).reduce((a, b) => 
+      sectors[a[0]] > sectors[b[0]] ? a : b
+    )
+    
+    if (sectorWithHighestAllocation[1] / totalValue > 0.4) {
+      insights.push({
+        type: 'warning',
+        title: 'High Sector Concentration',
+        description: `${Math.round(sectorWithHighestAllocation[1] / totalValue * 100)}% of your portfolio is in ${sectorWithHighestAllocation[0]}. Consider diversification.`,
+        icon: <AlertTriangle className="h-4 w-4 text-orange-500" />
+      })
+    }
+    
+    // Performance insights
+    if (portfolio.totalGainPercent > 10) {
+      insights.push({
+        type: 'positive',
+        title: 'Strong Performance',
+        description: `Your portfolio is up ${portfolio.totalGainPercent.toFixed(1)}% overall. Consider taking some profits or rebalancing.`,
+        icon: <TrendingUp className="h-4 w-4 text-green-500" />
+      })
+    }
+    
+    // Cash allocation insight
+    const cashAsset = portfolio.assets.find(asset => asset.type === 'cash')
+    if (cashAsset && cashAsset.totalValue / totalValue < 0.05) {
+      insights.push({
+        type: 'info',
+        title: 'Low Cash Allocation',
+        description: `Only ${Math.round(cashAsset.totalValue / totalValue * 100)}% in cash. Consider maintaining 5-10% for opportunities.`,
+        icon: <Target className="h-4 w-4 text-blue-500" />
+      })
+    }
+    
+    return insights
+  }
+
+  const portfolioInsights = getPortfolioInsights()
+
   return (
     <div className="space-y-6 mb-8">
       {/* Relevant News Section */}
@@ -160,12 +303,12 @@ export default function PortfolioInsights({ portfolio }: InsightsProps) {
               Portfolio Related News
             </CardTitle>
             <CardDescription>
-              Latest news affecting your portfolio assets
+              Breaking news affecting your holdings
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {relevantNews.slice(0, 5).map((news) => (
+              {relevantNews.slice(0, 12).map((news) => (
                 <div 
                   key={news.id} 
                   className="flex items-center gap-3 p-3 border-l-2 border-orange-200 pl-4 hover:bg-muted/50 cursor-pointer transition-colors"
@@ -174,6 +317,7 @@ export default function PortfolioInsights({ portfolio }: InsightsProps) {
                   {getSentimentIcon(news.sentiment)}
                   <div className="flex-1 min-w-0">
                     <h3 className="font-medium text-sm leading-tight truncate">{news.title}</h3>
+                    <p className="text-xs text-muted-foreground truncate">{news.summary}</p>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -188,40 +332,6 @@ export default function PortfolioInsights({ portfolio }: InsightsProps) {
         </Card>
       )}
 
-      {/* General Market News */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4" />
-            Market News & Insights
-          </CardTitle>
-          <CardDescription>
-            Latest financial news and market developments
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            {generalNews.map((news) => (
-              <div 
-                key={news.id} 
-                className="flex items-center gap-3 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
-                onClick={() => openNewsModal(news)}
-              >
-                {getSentimentIcon(news.sentiment)}
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-medium text-sm leading-tight truncate">{news.title}</h3>
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Clock className="h-3 w-3" />
-                    {formatTimeAgo(news.publishedAt)}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
 
       {/* News Detail Modal */}
       <Dialog open={isModalOpen} onOpenChange={closeNewsModal}>

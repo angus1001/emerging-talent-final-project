@@ -1,10 +1,11 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Trash2, TrendingUp, TrendingDown, Edit } from "lucide-react"
+import { Trash2, TrendingUp, TrendingDown, Edit, ChevronLeft, ChevronRight } from "lucide-react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,6 +24,27 @@ interface AssetManagementProps {
 }
 
 export default function AssetManagement({ assets, onRemoveAsset }: AssetManagementProps) {
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 5
+
+  // Pagination logic
+  const totalPages = Math.ceil(assets.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const paginatedAssets = assets.slice(startIndex, endIndex)
+
+  const handlePreviousPage = () => {
+    setCurrentPage(prev => Math.max(1, prev - 1))
+  }
+
+  const handleNextPage = () => {
+    setCurrentPage(prev => Math.min(totalPages, prev + 1))
+  }
+
+  // Reset page when assets data changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [assets.length])
   const getAssetTypeColor = (type: string) => {
     switch (type) {
       case "stock":
@@ -40,7 +62,7 @@ export default function AssetManagement({ assets, onRemoveAsset }: AssetManageme
     <Card>
       <CardHeader>
         <CardTitle>Asset Management</CardTitle>
-        <CardDescription>View, edit, and remove assets from your portfolio</CardDescription>
+        <CardDescription>View details of assets from your portfolio</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="rounded-md border">
@@ -54,11 +76,10 @@ export default function AssetManagement({ assets, onRemoveAsset }: AssetManageme
                 <TableHead>Total Value</TableHead>
                 <TableHead>Gain/Loss</TableHead>
                 <TableHead>Return %</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {assets.map((asset) => (
+              {paginatedAssets.map((asset) => (
                 <TableRow key={asset.id}>
                   <TableCell>
                     <div>
@@ -84,47 +105,45 @@ export default function AssetManagement({ assets, onRemoveAsset }: AssetManageme
                       {(asset.gainPercent || 0).toFixed(2)}%
                     </span>
                   </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center gap-2 justify-end">
-                      <Button variant="outline" size="sm">
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="text-red-600 hover:text-red-700 bg-transparent"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Remove Asset</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Are you sure you want to remove {asset.symbol} from your portfolio? This action cannot be
-                              undone.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => onRemoveAsset(asset.id)}
-                              className="bg-red-600 hover:bg-red-700"
-                            >
-                              Remove Asset
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </div>
+
+        {/* Assets Pagination Controls */}
+        {assets.length > itemsPerPage && (
+          <div className="mt-4 flex items-center justify-between border-t pt-3">
+            <div className="text-xs text-gray-600">
+              {startIndex + 1}-{Math.min(endIndex, assets.length)} of {assets.length}
+            </div>
+            <div className="flex items-center space-x-1">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePreviousPage}
+                disabled={currentPage === 1}
+                className="h-8 px-3"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              
+              <span className="text-sm px-3">
+                {currentPage}/{totalPages}
+              </span>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleNextPage}
+                disabled={currentPage === totalPages}
+                className="h-8 px-3"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        )}
 
         {assets.length === 0 && (
           <div className="text-center py-8 text-muted-foreground">

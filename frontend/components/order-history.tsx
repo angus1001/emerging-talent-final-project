@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Loader2, TrendingUp, TrendingDown, Clock, CheckCircle, XCircle } from "lucide-react"
+import { Loader2, TrendingUp, TrendingDown, Clock, CheckCircle, XCircle, ChevronLeft, ChevronRight } from "lucide-react"
 import { useUserOrders } from "@/hooks/use-orders"
 import { formatCurrency, formatDate } from "@/lib/api"
 
@@ -14,6 +14,27 @@ interface OrderHistoryProps {
 
 export default function OrderHistory({ userId }: OrderHistoryProps) {
   const { orders, loading, error, refetchOrders } = useUserOrders(userId)
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 5
+
+  // Pagination logic
+  const totalPages = Math.ceil(orders.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const paginatedOrders = orders.slice(startIndex, endIndex)
+
+  const handlePreviousPage = () => {
+    setCurrentPage(prev => Math.max(1, prev - 1))
+  }
+
+  const handleNextPage = () => {
+    setCurrentPage(prev => Math.min(totalPages, prev + 1))
+  }
+
+  // Reset page when orders data changes
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [orders.length])
 
   if (loading) {
     return (
@@ -107,7 +128,7 @@ export default function OrderHistory({ userId }: OrderHistoryProps) {
           </div>
         ) : (
           <div className="space-y-4">
-            {orders.map((order) => (
+            {paginatedOrders.map((order) => (
               <div key={order.order_id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
                 <div className="flex items-center space-x-4">
                   {getOrderTypeIcon(order.order_type)}
@@ -137,6 +158,40 @@ export default function OrderHistory({ userId }: OrderHistoryProps) {
                 </div>
               </div>
             ))}
+            
+            {/* Orders Pagination Controls */}
+            {orders.length > itemsPerPage && (
+              <div className="mt-4 flex items-center justify-between border-t pt-3">
+                <div className="text-xs text-gray-600">
+                  {startIndex + 1}-{Math.min(endIndex, orders.length)} of {orders.length}
+                </div>
+                <div className="flex items-center space-x-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handlePreviousPage}
+                    disabled={currentPage === 1}
+                    className="h-8 px-3"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  
+                  <span className="text-sm px-3">
+                    {currentPage}/{totalPages}
+                  </span>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleNextPage}
+                    disabled={currentPage === totalPages}
+                    className="h-8 px-3"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </CardContent>

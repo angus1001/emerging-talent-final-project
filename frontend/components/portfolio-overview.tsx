@@ -26,18 +26,18 @@ interface PortfolioOverviewProps {
 
 // Mock historical data
 const historicalData = [
-  { date: "2024-01", value: 100000, gain: 0 },
-  { date: "2024-02", value: 102500, gain: 2500 },
-  { date: "2024-03", value: 98750, gain: -1250 },
-  { date: "2024-04", value: 105000, gain: 5000 },
-  { date: "2024-05", value: 108500, gain: 8500 },
-  { date: "2024-06", value: 112000, gain: 12000 },
-  { date: "2024-07", value: 115750, gain: 15750 },
-  { date: "2024-08", value: 118250, gain: 18250 },
-  { date: "2024-09", value: 121500, gain: 21500 },
-  { date: "2024-10", value: 119750, gain: 19750 },
-  { date: "2024-11", value: 123000, gain: 23000 },
-  { date: "2024-12", value: 125750, gain: 25750 },
+  { date: "2024-09", value: 100000, gain: 0 },
+  { date: "2024-10", value: 102500, gain: 2500 },
+  { date: "2024-11", value: 98750, gain: -1250 },
+  { date: "2024-12", value: 105000, gain: 5000 },
+  { date: "2025-01", value: 108500, gain: 8500 },
+  { date: "2025-02", value: 112000, gain: 12000 },
+  { date: "2025-03", value: 115750, gain: 15750 },
+  { date: "2025-04", value: 118250, gain: 18250 },
+  { date: "2025-05", value: 121500, gain: 21500 },
+  { date: "2025-06", value: 119750, gain: 19750 },
+  { date: "2025-07", value: 123000, gain: 23000 },
+  { date: "2025-08", value: 125750, gain: 25750 },
 ]
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"]
