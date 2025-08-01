@@ -105,7 +105,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           price_per_share: parseFloat(price_per_share),
           total_value: totalValue,
           date: new Date(),
-          status: 'PENDING',
+          status: 'EXECUTED',
           duration,
         },
         include: {
@@ -113,6 +113,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           stock: true,
         },
       });
+
       // 买入后扣减用户现金并更新持仓
       if (order_type === 'BUY') {
         // 使用事务确保数据一致性
@@ -169,7 +170,58 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             });
           }
         });
-       }
+      }
+
+      // 卖出后增加用户现金并更新持仓
+      if (order_type === 'SELL') {
+        await prisma.$transaction(async (tx) => {
+          // 查找用户持仓
+          let holding = await tx.holding.findFirst({
+            where: {
+              user_id: user.user_id,
+              stock_id: stock.stock_id
+            }
+          });
+
+          if (!holding || holding.holding_number < parseInt(quantity)) {
+            throw new Error('Not enough shares to sell');
+          }
+
+          // 1. 增加用户现金
+          await tx.user.update({
+            where: { user_id: user.user_id },
+            data: {
+              cash: {
+                increment: totalValue
+              }
+            }
+          });
+
+          // 2. 更新或删除持仓
+          const sellQuantity = parseInt(quantity);
+          const newHoldingNumber = holding.holding_number - sellQuantity;
+
+          if (newHoldingNumber === 0) {
+            // 卖出全部，删除持仓
+            await tx.holding.delete({
+              where: { holding_id: holding.holding_id }
+            });
+          } else {
+            // 卖出部分，更新持仓数量和总价值
+            await tx.holding.update({
+              where: { holding_id: holding.holding_id },
+              data: {
+                holding_number: newHoldingNumber,
+                // 卖出后总价值按剩余股数 * 原平均价（或当前价，视业务需求，这里用原平均价）
+                total_value: Math.round(newHoldingNumber * holding.average_price),
+                last_updated: new Date()
+              }
+            });
+          }
+        });
+
+        
+      }
       return res.status(201).json(order);
     } catch (error) {
       console.error('Order creation error:', error);
