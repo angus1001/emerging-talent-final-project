@@ -48,7 +48,7 @@ const mockNews: NewsItem[] = [
     title: "Apple Reports Strong Q3 Earnings Driven by AI Services",
     summary: "Apple's AI-powered services segment shows remarkable growth, with revenue up 23% year-over-year, exceeding analyst expectations. iPhone sales also beat forecasts.",
     source: "Reuters",
-    publishedAt: "2025-08-01T07:15:00Z",
+    publishedAt: "2025-08-01T04:30:00Z",
     category: "stock",
     sentiment: "positive",
     url: "#"
@@ -58,7 +58,7 @@ const mockNews: NewsItem[] = [
     title: "Tesla Faces Production Challenges in European Markets",
     summary: "Tesla reports slower-than-expected production ramp-up in its European facilities, citing supply chain constraints and regulatory delays affecting Q4 delivery targets.",
     source: "Bloomberg",
-    publishedAt: "2025-08-01T06:45:00Z",
+    publishedAt: "2025-07-31T09:45:00Z",
     category: "stock",
     sentiment: "negative",
     url: "#"
@@ -68,7 +68,7 @@ const mockNews: NewsItem[] = [
     title: "Google Alphabet Announces Major AI Infrastructure Investment",
     summary: "Alphabet commits $50 billion to AI data center expansion, positioning the company for next-generation cloud services and AI model training capabilities.",
     source: "TechCrunch",
-    publishedAt: "2025-08-01T05:30:00Z",
+    publishedAt: "2025-07-30T16:20:00Z",
     category: "stock",
     sentiment: "positive",
     url: "#"
@@ -78,7 +78,7 @@ const mockNews: NewsItem[] = [
     title: "US Treasury 10-Year Bond Yields Drop to 3-Month Low",
     summary: "Treasury bond prices surge as investors seek safe haven assets amid market volatility, with 10-year yields falling below 4% for first time since May.",
     source: "Wall Street Journal",
-    publishedAt: "2025-08-01T04:20:00Z",
+    publishedAt: "2025-07-30T11:15:00Z",
     category: "economy",
     sentiment: "positive",
     url: "#"
@@ -88,7 +88,7 @@ const mockNews: NewsItem[] = [
     title: "Technology Sector Outperforms Amid AI Optimism",
     summary: "Tech stocks lead market gains as artificial intelligence continues to drive investor enthusiasm, with sector up 12% over past month.",
     source: "CNBC",
-    publishedAt: "2025-08-01T03:45:00Z",
+    publishedAt: "2025-07-29T13:30:00Z",
     category: "tech",
     sentiment: "positive",
     url: "#"
@@ -98,7 +98,7 @@ const mockNews: NewsItem[] = [
     title: "Microsoft Azure Cloud Revenue Jumps 35% in Q3",
     summary: "Microsoft reports exceptional cloud growth driven by AI and enterprise digital transformation, with Azure becoming the primary growth engine for the company.",
     source: "TechCrunch",
-    publishedAt: "2025-08-01T03:20:00Z",
+    publishedAt: "2025-07-29T08:20:00Z",
     category: "stock",
     sentiment: "positive",
     url: "#"
@@ -108,7 +108,7 @@ const mockNews: NewsItem[] = [
     title: "Apple iPhone 16 Pre-Orders Exceed Expectations",
     summary: "New iPhone featuring advanced AI capabilities sees record pre-order numbers, signaling strong consumer demand for AI-powered devices.",
     source: "Wall Street Journal",
-    publishedAt: "2025-08-01T02:55:00Z",
+    publishedAt: "2025-07-28T15:10:00Z",
     category: "stock",
     sentiment: "positive",
     url: "#"
@@ -118,7 +118,7 @@ const mockNews: NewsItem[] = [
     title: "Tesla Stock Volatile on Autopilot Regulatory Review",
     summary: "Tesla shares fluctuate as NHTSA announces comprehensive review of Full Self-Driving technology, raising questions about autonomous vehicle timeline.",
     source: "Reuters",
-    publishedAt: "2025-08-01T02:30:00Z",
+    publishedAt: "2025-07-27T20:30:00Z",
     category: "stock",
     sentiment: "negative",
     url: "#"
@@ -128,7 +128,7 @@ const mockNews: NewsItem[] = [
     title: "Google Search Ad Revenue Shows Strong Recovery",
     summary: "Alphabet's search advertising business rebounds with 15% growth, driven by improved AI-powered ad targeting and increased digital marketing spend.",
     source: "Bloomberg",
-    publishedAt: "2025-08-01T02:10:00Z",
+    publishedAt: "2025-07-26T12:45:00Z",
     category: "stock",
     sentiment: "positive",
     url: "#"
@@ -138,7 +138,7 @@ const mockNews: NewsItem[] = [
     title: "US Treasury Bonds Rally on Safe Haven Demand",
     summary: "Government bonds gain as global uncertainty drives investors toward safe assets, with 10-year Treasury yields dropping to multi-month lows.",
     source: "Financial Times",
-    publishedAt: "2025-08-01T01:45:00Z",
+    publishedAt: "2025-07-25T16:55:00Z",
     category: "economy",
     sentiment: "positive",
     url: "#"
@@ -149,7 +149,7 @@ const mockNews: NewsItem[] = [
     title: "Federal Reserve Signals Potential Rate Cut in Q4 2025",
     summary: "Fed Chair Jerome Powell hints at monetary policy easing amid cooling inflation data, potentially boosting equity markets across all sectors.",
     source: "Financial Times",
-    publishedAt: "2025-08-01T08:30:00Z",
+    publishedAt: "2025-07-24T10:15:00Z",
     category: "economy",
     sentiment: "positive",
     url: "#"
@@ -159,7 +159,7 @@ const mockNews: NewsItem[] = [
     title: "Global Supply Chain Disruptions Impact Multiple Industries",
     summary: "Ongoing supply chain challenges affect manufacturing and technology sectors, with companies warning of potential delays through Q4 2025.",
     source: "Reuters",
-    publishedAt: "2025-08-01T02:15:00Z",
+    publishedAt: "2025-07-23T14:30:00Z",
     category: "market",
     sentiment: "negative",
     url: "#"
@@ -169,7 +169,7 @@ const mockNews: NewsItem[] = [
     title: "Emerging Markets Show Strong Performance",
     summary: "Developing market equities outperform developed markets as dollar weakness and improving economic fundamentals attract investor capital.",
     source: "Bloomberg",
-    publishedAt: "2025-08-01T01:30:00Z",
+    publishedAt: "2025-07-22T18:45:00Z",
     category: "market",
     sentiment: "positive",
     url: "#"
